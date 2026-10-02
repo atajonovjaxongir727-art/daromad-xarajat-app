@@ -1,4 +1,4 @@
-﻿FROM node:20-slim AS builder
+FROM node:20-slim AS builder
 
 WORKDIR /app
 
@@ -11,9 +11,8 @@ ENV DATABASE_URL="file:./dev.db"
 
 RUN npm install
 
-COPY tsconfig.json ./
+COPY tsconfig.json vite.config.ts tailwind.config.js postcss.config.js index.html ./
 COPY src ./src/
-COPY public ./public/
 
 RUN npx prisma generate
 RUN npm run build
@@ -28,7 +27,7 @@ COPY package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/public ./public
+COPY --from=builder /app/src ./src
 
 ENV NODE_ENV=production
 ENV PORT=3000
@@ -36,4 +35,4 @@ ENV DATABASE_URL="file:./dev.db"
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "npx prisma db push && node dist/database/seed.js && node dist/index.js"]
+CMD ["sh", "-c", "npx prisma db push && npm run db:seed && npm start"]

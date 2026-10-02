@@ -1,139 +1,177 @@
-generator client {
-  provider = "prisma-client-js"
-}
-
 datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
+generator client {
+  provider = "prisma-client-js"
+}
+
 model User {
-  id          Int        @id @default(autoincrement())
-  telegramId  String     @unique
-  username    String?
-  firstName   String?
-  lastName    String?
-  language    String     @default("uz")
-  phone       String?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id           String   @id @default(uuid())
+  name         String   @unique
+  pin          String   // e.g. "1234"
+  avatarColor  String   @default("#2563eb")
+  role         String   @default("user")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  questions   Question[]
-  payments    Payment[]
+  recurringIncomes   RecurringIncome[]
+  recurringInstances RecurringIncomeInstance[]
+  payments           Payment[]
+  incomes            Income[]
+  expenses           Expense[]
+  auditLogs          AuditLog[]
 }
 
-model Service {
-  id            Int        @id @default(autoincrement())
-  code          String     @unique
-  nameUz        String
-  nameRu        String
-  descriptionUz String
-  descriptionRu String
-  price         Int
-  priceText     String?
-  isActive      Boolean    @default(true)
-  sortOrder     Int        @default(0)
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+model Account {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  type        String   @default("cash") // cash, card, bank, other
+  balance     Float    @default(0)
+  color       String   @default("#3b82f6")
+  icon        String   @default("wallet")
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  questions     Question[]
+  incomes      Income[]
+  expenses     Expense[]
+  payments     Payment[]
+  transactions Transaction[]
 }
 
-model Question {
-  id              Int            @id @default(autoincrement())
-  questionNumber  Int            @unique
-  userId          Int
-  user            User           @relation(fields: [userId], references: [id])
-  serviceId       Int?
-  service         Service?       @relation(fields: [serviceId], references: [id])
-  questionText    String
-  enterpriseName  String?
-  status          String         @default("NEW")
-  price           Int            @default(0)
-  adminNotes      String?
-  
-  aiCategory      String?
-  aiSummary       String?
-  aiDraftAnswer   String?
-  aiLegalBasis    String?
-  
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+model RecurringIncome {
+  id             String   @id @default(uuid())
+  title          String   // Mijoz / Manba nomi, masalan: "ABC MChJ"
+  amount         Float    // Oylik to'lov summasi
+  billingDay     Int      // 1-31, to'lov kutiladigan sana
+  assignedUserId String
+  assignedUser   User     @relation(fields: [assignedUserId], references: [id])
+  isActive       Boolean  @default(true)
+  startDate      String   // YYYY-MM-DD
+  endDate        String?  // YYYY-MM-DD (faolsizlantirilganda)
+  category       String   @default("Mijoz to'lovi")
+  note           String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  files           QuestionFile[]
-  payments        Payment[]
-  answer          Answer?
+  instances RecurringIncomeInstance[]
 }
 
-model QuestionFile {
-  id          Int       @id @default(autoincrement())
-  questionId  Int
-  question    Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  fileId      String
-  fileType    String
-  fileName    String?
-  fileSize    Int?
-  localPath   String?
-  mimeType    String?
-  createdAt   DateTime  @default(now())
+model RecurringIncomeInstance {
+  id                String          @id @default(uuid())
+  recurringIncomeId String
+  recurringIncome   RecurringIncome @relation(fields: [recurringIncomeId], references: [id], onDelete: Cascade)
+  yearMonth         String          // "2026-08", "2026-09", "2026-10"
+  dueDate           String          // YYYY-MM-DD (masalan: "2026-08-10")
+  expectedAmount    Float           // O'sha oy uchun belgilangan summa (tarix saqlanadi!)
+  paidAmount        Float           @default(0)
+  status            String          @default("PENDING") // PENDING, PARTIALLY_PAID, PAID, OVERDUE
+  assignedUserId    String
+  assignedUser      User            @relation(fields: [assignedUserId], references: [id])
+  note              String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  payments Payment[]
+  incomes  Income[]
+
+  @@unique([recurringIncomeId, yearMonth])
 }
 
 model Payment {
-  id              Int       @id @default(autoincrement())
-  questionId      Int
-  question        Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  userId          Int
-  user            User      @relation(fields: [userId], references: [id])
-  amount          Int
-  currency        String    @default("UZS")
-  paymentMethod   String    @default("MANUAL")
-  status          String    @default("PENDING")
-  receiptFileId   String?
-  receiptImageUrl String?
-  transactionId   String?
-  confirmedAt     DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id                  String                  @id @default(uuid())
+  recurringInstanceId String
+  recurringInstance   RecurringIncomeInstance @relation(fields: [recurringInstanceId], references: [id], onDelete: Cascade)
+  amount              Float
+  paymentDate         String                  // YYYY-MM-DD (haqiqiy to'lov sanasi)
+  accountId           String
+  account             Account                 @relation(fields: [accountId], references: [id])
+  receivedById        String
+  receivedBy          User                    @relation(fields: [receivedById], references: [id])
+  incomeId            String?
+  note                String?
+  createdAt           DateTime                @default(now())
 }
 
-model Answer {
-  id          Int       @id @default(autoincrement())
-  questionId  Int       @unique
-  question    Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  adminId     Int?
-  admin       Admin?    @relation(fields: [adminId], references: [id])
-  answerText  String
-  legalBasis  String?
-  conclusion  String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+model Income {
+  id                  String                   @id @default(uuid())
+  date                String                   // YYYY-MM-DD
+  amount              Float
+  userId              String
+  user                User                     @relation(fields: [userId], references: [id])
+  type                String                   @default("one_time") // recurring_payment | one_time
+  source              String                   // Mijoz / Kimdan
+  category            String                   // Daromad turi
+  accountId           String
+  account             Account                  @relation(fields: [accountId], references: [id])
+  paymentMethod       String                   @default("cash") // cash, card, bank
+  recurringInstanceId String?
+  recurringInstance   RecurringIncomeInstance? @relation(fields: [recurringInstanceId], references: [id], onDelete: SetNull)
+  note                String?
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
 }
 
-model Admin {
-  id           Int       @id @default(autoincrement())
-  telegramId   String?   @unique
-  username     String    @unique
-  passwordHash String
-  name         String
-  role         String    @default("ADMIN")
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+model ExpenseCategory {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  icon      String    @default("tag")
+  color     String    @default("#6b7280")
+  isCustom  Boolean   @default(false)
+  createdAt DateTime  @default(now())
 
-  answers      Answer[]
+  expenses Expense[]
+}
+
+model Expense {
+  id            String          @id @default(uuid())
+  date          String          // YYYY-MM-DD
+  amount        Float
+  userId        String
+  user          User            @relation(fields: [userId], references: [id])
+  categoryId    String
+  category      ExpenseCategory @relation(fields: [categoryId], references: [id])
+  accountId     String
+  account       Account         @relation(fields: [accountId], references: [id])
+  paymentMethod String          @default("cash")
+  note          String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+model Transaction {
+  id           String   @id @default(uuid())
+  date         String   // YYYY-MM-DD HH:mm:ss
+  type         String   // INCOME | EXPENSE | TRANSFER | DEBT_PAYMENT
+  amount       Float
+  accountId    String
+  account      Account  @relation(fields: [accountId], references: [id])
+  userId       String
+  description  String
+  referenceId  String?
+  balanceAfter Float?
+  createdAt    DateTime @default(now())
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  userName    String
+  action      String   // CREATE | UPDATE | DELETE | RECEIVE_PAYMENT | DEACTIVATE | LOGIN
+  entityType  String   // INCOME | EXPENSE | RECURRING | DEBT | ACCOUNT
+  entityId    String?
+  description String
+  oldData     String?
+  newData     String?
+  createdAt   DateTime @default(now())
 }
 
 model Setting {
-  id          Int      @id @default(autoincrement())
-  key         String   @unique
-  value       String
-  description String?
-  updatedAt   DateTime @updatedAt
-}
-
-model ActivityLog {
-  id          Int      @id @default(autoincrement())
-  eventType   String
-  description String
-  metadata    String?
-  createdAt   DateTime @default(now())
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
 }
