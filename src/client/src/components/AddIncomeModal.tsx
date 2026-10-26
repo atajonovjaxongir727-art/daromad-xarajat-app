@@ -31,6 +31,8 @@ export const AddIncomeModal: React.FC<AddIncomeModalProps> = ({
   const [error, setError] = useState<string>('');
   const [recurringSources, setRecurringSources] = useState<RecurringIncome[]>([]);
   const [isCustomSource, setIsCustomSource] = useState<boolean>(false);
+  const [selectedRecurringId, setSelectedRecurringId] = useState<string>('');
+  const [selectedOpenDebt, setSelectedOpenDebt] = useState<number | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -43,6 +45,8 @@ export const AddIncomeModal: React.FC<AddIncomeModalProps> = ({
       }
       setSource('');
       setIsCustomSource(false);
+      setSelectedRecurringId('');
+      setSelectedOpenDebt(null);
       setCategory('Mijoz to‘lovi');
       setNote('');
       setError('');
@@ -83,6 +87,7 @@ export const AddIncomeModal: React.FC<AddIncomeModalProps> = ({
           date,
           userId,
           source: source || 'Mijozdan',
+          recurringIncomeId: !isCustomSource && selectedRecurringId ? selectedRecurringId : undefined,
           category,
           accountId,
           paymentMethod,
@@ -215,33 +220,58 @@ export const AddIncomeModal: React.FC<AddIncomeModalProps> = ({
               </div>
 
               {!isCustomSource && recurringSources.length > 0 ? (
-                <select
-                  value={source}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === '__OTHER__') {
-                      setIsCustomSource(true);
-                      setSource('');
-                    } else {
-                      setSource(val);
-                      const matched = recurringSources.find((r) => r.title === val);
-                      if (matched) {
-                        if (!amount) setAmount(matched.amount);
-                        if (matched.category) setCategory(matched.category);
+                <div>
+                  <select
+                    value={source}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '__OTHER__') {
+                        setIsCustomSource(true);
+                        setSelectedRecurringId('');
+                        setSelectedOpenDebt(null);
+                        setSource('');
+                      } else {
+                        setSource(val);
+                        const matched = recurringSources.find((r) => r.title === val);
+                        if (matched) {
+                          setSelectedRecurringId(matched.id);
+                          setSelectedOpenDebt(matched.openDebt !== undefined ? matched.openDebt : null);
+                          if (!amount) setAmount(matched.amount);
+                          if (matched.category) setCategory(matched.category);
+                        } else {
+                          setSelectedRecurringId('');
+                          setSelectedOpenDebt(null);
+                        }
                       }
-                    }
-                  }}
-                  className="w-full py-2 px-3 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-                  required
-                >
-                  <option value="">-- Manbani tanlang --</option>
-                  {recurringSources.map((r) => (
-                    <option key={r.id} value={r.title}>
-                      {r.title} ({new Intl.NumberFormat('uz-UZ').format(r.amount)} so‘m/oy)
-                    </option>
-                  ))}
-                  <option value="__OTHER__">➕ Boshqa (qo‘lda yozish)...</option>
-                </select>
+                    }}
+                    className="w-full py-2 px-3 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                    required
+                  >
+                    <option value="">-- Doimiy mijozni tanlang --</option>
+                    {recurringSources.map((r) => (
+                      <option key={r.id} value={r.title}>
+                        {r.title} ({new Intl.NumberFormat('uz-UZ').format(r.amount)} so‘m/oy)
+                      </option>
+                    ))}
+                    <option value="__OTHER__">➕ Boshqa (qo‘lda yozish)...</option>
+                  </select>
+
+                  {selectedOpenDebt !== null && selectedOpenDebt > 0 ? (
+                    <div className="mt-2 p-2.5 rounded-xl bg-amber-50/80 border border-amber-200 text-xs animate-in fade-in">
+                      <div className="flex items-center justify-between text-amber-900 font-bold">
+                        <span>Mijozning ochiq qarzdorligi:</span>
+                        <span>{new Intl.NumberFormat('uz-UZ').format(selectedOpenDebt)} so‘m</span>
+                      </div>
+                      <p className="text-[10px] text-amber-700 mt-1 leading-normal">
+                        ⚡ <strong>Avtomatik:</strong> Kiritilgan summa ushbu mijozning qarzdorligidan chegiriladi va qarz kamayadi!
+                      </p>
+                    </div>
+                  ) : selectedOpenDebt === 0 ? (
+                    <p className="text-[10px] text-emerald-600 mt-1.5 font-semibold">
+                      ✓ Ushbu mijozda hozirda ochiq qarzdorlik yo‘q (barcha to‘lovlar to‘langan)
+                    </p>
+                  ) : null}
+                </div>
               ) : (
                 <input
                   type="text"
