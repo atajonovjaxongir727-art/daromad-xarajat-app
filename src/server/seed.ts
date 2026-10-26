@@ -14,10 +14,10 @@ async function main() {
 
   // 1. Foydalanuvchilar (Ali va Vali)
   const ali = await prisma.user.upsert({
-    where: { name: 'Ali' },
+    where: { name: 'JAXONGIR' },
     update: {},
     create: {
-      name: 'Ali',
+      name: 'JAXONGIR',
       pin: '1234',
       avatarColor: '#2563eb', // Ko'k
       role: 'user',
@@ -25,17 +25,17 @@ async function main() {
   });
 
   const vali = await prisma.user.upsert({
-    where: { name: 'Vali' },
+    where: { name: 'BAXRAM' },
     update: {},
     create: {
-      name: 'Vali',
+      name: 'BAXRAM',
       pin: '5678',
       avatarColor: '#10b981', // Yashil
       role: 'user',
     },
   });
 
-  console.log('✅ Foydalanuvchilar yaratildi: Ali (PIN: 1234), Vali (PIN: 5678)');
+  console.log('✅ Foydalanuvchilar yaratildi: JAXONGIR va BAXRAM');
 
   // 2. Hisoblar / Hamyonlar (Section 20)
   const cashAccount = await prisma.account.upsert({
@@ -530,35 +530,35 @@ async function main() {
     data: [
       {
         userId: ali.id,
-        userName: 'Ali',
+        userName: 'JAXONGIR',
         action: 'CREATE',
         entityType: 'RECURRING',
         description: 'Ali \'ABC MChJ\' doimiy daromad manbasini qo\'shdi (1 000 000 so\'m)',
       },
       {
         userId: vali.id,
-        userName: 'Vali',
+        userName: 'BAXRAM',
         action: 'CREATE',
         entityType: 'RECURRING',
         description: 'Vali \'XYZ MChJ\' doimiy daromad manbasini qo\'shdi (2 500 000 so\'m)',
       },
       {
         userId: ali.id,
-        userName: 'Ali',
+        userName: 'JAXONGIR',
         action: 'RECEIVE_PAYMENT',
         entityType: 'DEBT',
         description: 'Ali ABC MChJ dan 1 000 000 so\'mlik to\'lovni qabul qildi',
       },
       {
         userId: ali.id,
-        userName: 'Ali',
+        userName: 'JAXONGIR',
         action: 'CREATE',
         entityType: 'EXPENSE',
         description: 'Ali 300 000 so\'mlik ofis xarajatini kiritdi',
       },
       {
         userId: vali.id,
-        userName: 'Vali',
+        userName: 'BAXRAM',
         action: 'CREATE',
         entityType: 'EXPENSE',
         description: 'Vali 150 000 so\'mlik transport xarajatini kiritdi',
