@@ -23,6 +23,8 @@ import { UserPinModal } from './components/UserPinModal';
 import { ProfileSettingsModal } from './components/ProfileSettingsModal';
 import { SettingsView } from './components/SettingsView';
 import { ExportModal } from './components/ExportModal';
+import { BottomNav } from './components/BottomNav';
+import { QuickActionModal } from './components/QuickActionModal';
 
 import {
   DashboardData,
@@ -55,6 +57,7 @@ const MainApp: React.FC = () => {
   const [accountModalMode, setAccountModalMode] = useState<'create' | 'transfer'>('create');
 
   const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [quickActionOpen, setQuickActionOpen] = useState(false);
 
   // Ma'lumotlarni serverdan yuklash
   const fetchAllData = async (monthOverride?: string) => {
@@ -134,7 +137,7 @@ const MainApp: React.FC = () => {
           onCloseMobile={() => setMobileMenuOpen(false)}
         />
 
-        <main className="flex-1 p-4 lg:p-8 overflow-y-auto">
+        <main className="flex-1 p-4 lg:p-8 pb-24 lg:pb-8 overflow-y-auto">
           {/* Ogohlantirish banneri (agar kechikkan qarzlar bo'lsa) */}
           {dashboardData?.kpi?.overdueCount ? (
             <div className="mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200/80 text-rose-800 flex items-center justify-between shadow-sm animate-in fade-in">
@@ -269,6 +272,25 @@ const MainApp: React.FC = () => {
         isOpen={exportModalOpen}
         onClose={() => setExportModalOpen(false)}
         dashboardData={dashboardData}
+      />
+
+      {/* Android Bottom Navigation Bar (Pastki navigatsiya) */}
+      <BottomNav
+        currentTab={currentTab}
+        onSelectTab={handleSelectTab}
+        openDebtCount={dashboardData?.kpi?.overdueCount || 0}
+        onQuickActionClick={() => setQuickActionOpen(true)}
+        onMoreClick={() => setMobileMenuOpen(true)}
+      />
+
+      {/* Android Quick Action Bottom Sheet (Tezkor Amallar) */}
+      <QuickActionModal
+        isOpen={quickActionOpen}
+        onClose={() => setQuickActionOpen(false)}
+        onAddIncome={() => setAddIncomeModalOpen(true)}
+        onAddExpense={() => setAddExpenseModalOpen(true)}
+        onAddRecurring={() => setAddRecurringModalOpen(true)}
+        onOpenTransfer={handleOpenTransfer}
       />
     </div>
   );
