@@ -132,7 +132,7 @@ export async function getDashboardSummary(selectedMonth?: string) {
       remainingAmount: inst.expectedAmount - inst.paidAmount,
       status: inst.status,
       assignedUser: inst.assignedUser.name,
-      isOverdue: inst.dueDate < todayStr,
+      isOverdue: inst.dueDate < todayStr || inst.yearMonth === 'Oldingi qarz',
       overdueDays: inst.dueDate < todayStr ? Math.max(0, Math.floor((new Date(todayStr).getTime() - new Date(inst.dueDate).getTime()) / (1000 * 60 * 60 * 24))) : 0,
     }));
 

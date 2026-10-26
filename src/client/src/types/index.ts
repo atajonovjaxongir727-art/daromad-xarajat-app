@@ -19,6 +19,7 @@ export interface RecurringIncome {
   id: string;
   title: string;
   amount: number;
+  initialDebt?: number;
   billingDay: number;
   assignedUserId: string;
   assignedUser?: User;

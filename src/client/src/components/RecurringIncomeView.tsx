@@ -187,7 +187,14 @@ export const RecurringIncomeView: React.FC<RecurringIncomeViewProps> = ({
                           <Repeat className="w-4 h-4" />
                         </div>
                         <div>
-                          <p className="font-bold text-slate-900">{item.title}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-bold text-slate-900">{item.title}</p>
+                            {item.initialDebt && item.initialDebt > 0 ? (
+                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                                Oldingi qarz: {formatMoney(item.initialDebt)}
+                              </span>
+                            ) : null}
+                          </div>
                           <p className="text-[11px] text-slate-400">
                             {item.category} {item.note ? `• ${item.note}` : ''}
                           </p>

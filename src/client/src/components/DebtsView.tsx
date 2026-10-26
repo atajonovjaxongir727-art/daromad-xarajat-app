@@ -198,9 +198,15 @@ export const DebtsView: React.FC<DebtsViewProps> = ({ onOpenPaymentModal, users 
                           <h4 className="text-sm font-bold text-slate-900">
                             {item.recurringIncome.title}
                           </h4>
-                          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
-                            {item.yearMonth}
-                          </span>
+                          {item.yearMonth === 'Oldingi qarz' ? (
+                            <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-200">
+                              Oldingi qarzdorlik
+                            </span>
+                          ) : (
+                            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
+                              {getMonthName(item.yearMonth)} ({item.yearMonth})
+                            </span>
+                          )}
                         </div>
 
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 mt-1">

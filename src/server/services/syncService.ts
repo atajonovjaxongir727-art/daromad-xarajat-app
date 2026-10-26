@@ -151,7 +151,7 @@ export async function syncRecurringDebts() {
       if (inst.dueDate === todayStr) {
         todayDueCount++;
       }
-      if (inst.dueDate < todayStr) {
+      if (inst.dueDate < todayStr || inst.yearMonth === 'Oldingi qarz') {
         overdueCount++;
         totalOverdueAmount += remaining;
       }

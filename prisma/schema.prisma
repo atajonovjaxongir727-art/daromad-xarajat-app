@@ -45,6 +45,7 @@ model RecurringIncome {
   id             String   @id @default(uuid())
   title          String   // Mijoz / Manba nomi, masalan: "ABC MChJ"
   amount         Float    // Oylik to'lov summasi
+  initialDebt    Float    @default(0) // Shartnomagacha bo'lgan oldingi qarzdorlik
   billingDay     Int      // 1-31, to'lov kutiladigan sana
   assignedUserId String
   assignedUser   User     @relation(fields: [assignedUserId], references: [id])

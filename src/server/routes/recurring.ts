@@ -52,18 +52,20 @@ router.get('/', async (req, res) => {
 // Yangi doimiy daromad qo'shish (Section 3)
 router.post('/', async (req, res) => {
   try {
-    const { title, amount, billingDay, assignedUserId, category, note, currentUserId, currentUserName } = req.body;
+    const { title, amount, initialDebt, billingDay, assignedUserId, category, note, currentUserId, currentUserName } = req.body;
 
     if (!title || !amount || !billingDay || !assignedUserId) {
       return res.status(400).json({ success: false, message: 'Barcha majburiy maydonlarni to‘ldiring' });
     }
 
     const todayStr = getTodayString();
+    const prevDebt = initialDebt ? Number(initialDebt) : 0;
 
     const created = await prisma.recurringIncome.create({
       data: {
         title,
         amount: Number(amount),
+        initialDebt: prevDebt,
         billingDay: Number(billingDay),
         assignedUserId,
         category: category || 'Mijoz to‘lovi',
@@ -75,6 +77,22 @@ router.post('/', async (req, res) => {
         assignedUser: true,
       },
     });
+
+    // Agar oldingi qarzdorlik kiritilgan bo'lsa, uni avtomatik qarzdorlik instansiyasi qilib yaratamiz
+    if (prevDebt > 0) {
+      await prisma.recurringIncomeInstance.create({
+        data: {
+          recurringIncomeId: created.id,
+          yearMonth: 'Oldingi qarz',
+          dueDate: todayStr,
+          expectedAmount: prevDebt,
+          paidAmount: 0,
+          status: 'OVERDUE',
+          assignedUserId,
+          note: "Shartnomagacha bo'lgan oldingi qarzdorlik",
+        },
+      });
+    }
 
     // Avtomatik joriy oy uchun qarzdorlikni yaratish
     await syncRecurringDebts();

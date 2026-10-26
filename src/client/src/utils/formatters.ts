@@ -25,7 +25,9 @@ export function formatDateTime(dateTimeStr: string | undefined | null): string {
 
 export function getMonthName(yearMonth: string): string {
   if (!yearMonth) return '';
+  if (yearMonth === 'Oldingi qarz' || yearMonth === 'Eski qarz') return 'Oldingi qarzdorlik';
   const [y, m] = yearMonth.split('-');
+  if (!m) return yearMonth;
   const monthNames = [
     'Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun',
     'Iyul', 'Avgust', 'Sentyabr', 'Oktyabr', 'Noyabr', 'Dekabr'

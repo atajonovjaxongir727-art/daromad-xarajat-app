@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Repeat, AlertCircle, Calendar, UserCheck, Tag, Info } from 'lucide-react';
+import { X, Repeat, AlertCircle, Calendar, UserCheck, Tag, Info, Clock } from 'lucide-react';
 import { User } from '../types';
 import { useAuth } from '../context/AuthContext';
 
@@ -19,6 +19,7 @@ export const AddRecurringModal: React.FC<AddRecurringModalProps> = ({
   const { currentUser } = useAuth();
   const [title, setTitle] = useState('');
   const [amount, setAmount] = useState<number | ''>('');
+  const [initialDebt, setInitialDebt] = useState<number | ''>('');
   const [billingDay, setBillingDay] = useState<number>(10);
   const [assignedUserId, setAssignedUserId] = useState<string>('');
   const [category, setCategory] = useState<string>('Mijoz to‘lovi');
@@ -30,6 +31,7 @@ export const AddRecurringModal: React.FC<AddRecurringModalProps> = ({
     if (isOpen) {
       setTitle('');
       setAmount('');
+      setInitialDebt('');
       setBillingDay(10);
       setAssignedUserId(currentUser?.id || users[0]?.id || '');
       setCategory('Mijoz to‘lovi');
@@ -61,6 +63,7 @@ export const AddRecurringModal: React.FC<AddRecurringModalProps> = ({
         body: JSON.stringify({
           title: title.trim(),
           amount: Number(amount),
+          initialDebt: initialDebt ? Number(initialDebt) : 0,
           billingDay: Number(billingDay),
           assignedUserId,
           category,
@@ -183,6 +186,35 @@ export const AddRecurringModal: React.FC<AddRecurringModalProps> = ({
                 ))}
               </select>
             </div>
+          </div>
+
+          {/* Oldingi qarzdorlik (Mavjud eski qarz) */}
+          <div className="p-3.5 rounded-2xl bg-amber-50/60 border border-amber-200/80">
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-amber-600" />
+                <span>Oldingi (mavjud) qarzdorlik</span>
+              </label>
+              <span className="text-[10px] font-semibold text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-full">
+                Eski qarz
+              </span>
+            </div>
+            <div className="relative mt-1">
+              <input
+                type="number"
+                min={0}
+                value={initialDebt}
+                onChange={(e) => setInitialDebt(e.target.value ? Number(e.target.value) : '')}
+                placeholder="0 yoki masalan: 3500000"
+                className="w-full py-2 px-3 text-xs font-bold rounded-xl border border-amber-200 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">
+                UZS
+              </span>
+            </div>
+            <p className="text-[10px] text-slate-500 mt-1 leading-normal">
+              Agar mijozning shartnomagacha to‘planib qolgan eski qarzi bo‘lsa, summani kiriting. U avtomatik tarzda <strong>Qarzdorliklar</strong> ro‘yxatiga tushadi va to‘lov qabul qilinganda hisobga olinadi.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

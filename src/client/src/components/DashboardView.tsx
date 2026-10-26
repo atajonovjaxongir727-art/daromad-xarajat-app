@@ -372,9 +372,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         )}
                       </div>
                       <div>
-                        <h4 className="text-xs font-bold text-slate-900">{item.title}</h4>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-xs font-bold text-slate-900">{item.title}</h4>
+                          {item.yearMonth === 'Oldingi qarz' && (
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200">
+                              Oldingi qarz
+                            </span>
+                          )}
+                        </div>
                         <div className="flex items-center gap-2 text-[11px] text-slate-500 mt-0.5">
-                          <span>Muddat: {formatDate(item.dueDate)}</span>
+                          <span>Muddat: {item.yearMonth === 'Oldingi qarz' ? 'Mavjud qarz' : formatDate(item.dueDate)}</span>
                           <span>•</span>
                           <span>Mas‘ul: {item.assignedUser}</span>
                         </div>

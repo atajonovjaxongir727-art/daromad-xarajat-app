@@ -60,7 +60,7 @@ router.get('/', async (req, res) => {
 
     const enriched = instances.map((inst) => {
       const remainingAmount = Math.max(0, inst.expectedAmount - inst.paidAmount);
-      const isPastDue = inst.dueDate < todayStr;
+      const isPastDue = inst.dueDate < todayStr || inst.yearMonth === 'Oldingi qarz';
       let overdueDays = 0;
 
       if (isPastDue && remainingAmount > 0) {
