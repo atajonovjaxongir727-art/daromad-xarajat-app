@@ -234,7 +234,6 @@ router.delete('/:id', async (req, res) => {
 
     const existing = await prisma.income.findUnique({
       where: { id },
-      include: { payments: true },
     });
 
     if (!existing) {
@@ -242,8 +241,12 @@ router.delete('/:id', async (req, res) => {
     }
 
     // 1. Agar ushbu daromadga bog'liq qarz to'lovlari bo'lsa, ularni orqaga qaytarish
-    if (existing.payments && existing.payments.length > 0) {
-      for (const pay of existing.payments) {
+    const linkedPayments = await prisma.payment.findMany({
+      where: { incomeId: id },
+    });
+
+    if (linkedPayments.length > 0) {
+      for (const pay of linkedPayments) {
         const inst = await prisma.recurringIncomeInstance.findUnique({
           where: { id: pay.recurringInstanceId },
         });
@@ -273,10 +276,15 @@ router.delete('/:id', async (req, res) => {
       data: { balance: { decrement: existing.amount } },
     });
 
-    // 3. Daromadni o'chirish
+    // 3. Tranzaksiyalar tarixidagi yozuvni ham o'chirish
+    await prisma.transaction.deleteMany({
+      where: { referenceId: id },
+    });
+
+    // 4. Daromadni o'chirish
     await prisma.income.delete({ where: { id } });
 
-    // 4. Audit Log
+    // 5. Audit Log
     await createAuditLog({
       userId: currentUserId || existing.userId,
       userName: currentUserName || 'Foydalanuvchi',
@@ -289,6 +297,7 @@ router.delete('/:id', async (req, res) => {
 
     res.json({ success: true, message: 'Daromad o‘chirildi va balans qaytarildi' });
   } catch (error: any) {
+    console.error('Delete income error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
