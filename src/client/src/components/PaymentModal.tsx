@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle2, AlertCircle, ArrowRight, Wallet, Calendar, UserCheck } from 'lucide-react';
+import {
+  X,
+  CheckCircle2,
+  AlertCircle,
+  ArrowRight,
+  Wallet,
+  Calendar,
+  UserCheck,
+  FileText,
+} from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { RecurringIncomeInstance, Account, User } from '../types';
 import { formatMoney, formatDate } from '../utils/formatters';
@@ -41,7 +50,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         setAccountId(defaultAcc.id);
       }
       setReceivedById(currentUser?.id || instance.assignedUserId);
-      setNote(`${instance.recurringIncome.title} (${instance.yearMonth}) oylik to‘lovi`);
+      setNote(`${instance.recurringIncome?.title || 'Qarz'} (${instance.yearMonth}) to'lovi`);
       setError('');
     }
   }, [instance, accounts, currentUser]);
@@ -53,11 +62,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!amount || amount <= 0) {
-      setError('To‘lov summasini kiriting');
+      setError("To'lov summasini kiriting");
       return;
     }
     if (amount > remainingDebt) {
-      setError(`Summa qoldiq qarzdan (${formatMoney(remainingDebt)}) ko‘p bo‘lishi mumkin emas`);
+      setError(`Summa qoldiq qarzdan (${formatMoney(remainingDebt)}) ko'p bo'lishi mumkin emas`);
       return;
     }
     if (!accountId) {
@@ -65,7 +74,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       return;
     }
     if (!receivedById) {
-      setError('To‘lovni qabul qilgan shaxsni tanlang');
+      setError("To'lovni qabul qilgan shaxsni tanlang");
       return;
     }
 
@@ -77,11 +86,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount,
+          amount: Number(amount),
           paymentDate,
           accountId,
           receivedById,
           note,
+          currentUserId: currentUser?.id,
+          currentUserName: currentUser?.name,
         }),
       });
 
@@ -92,151 +103,158 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         return;
       }
 
-      // Agar qarz to'liq yopilsa, bayramona animatsiya (Confetti)
-      if (amount >= remainingDebt) {
-        try {
-          confetti({
-            particleCount: 100,
-            spread: 70,
-            origin: { y: 0.6 },
-          });
-        } catch (e) {
-          // ignore
-        }
-      }
+      try {
+        confetti({
+          particleCount: 70,
+          spread: 70,
+          origin: { y: 0.7 },
+        });
+      } catch (_) {}
 
       setLoading(false);
       onPaymentSuccess();
       onClose();
     } catch (err: any) {
       setLoading(false);
-      setError(err.message || 'Server bilan bog‘lanishda xatolik');
+      setError(err.message || 'Server bilan aloqada xatolik');
     }
   };
 
-  const isFullPayment = amount >= remainingDebt;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
-      <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[90vh]">
-        {/* Header */}
-        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-blue-50/50 to-indigo-50/50">
+    <div className="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center sm:items-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
+      <div className="w-full h-full sm:h-auto sm:max-h-[92vh] sm:max-w-lg bg-white rounded-none sm:rounded-3xl shadow-2xl border-0 sm:border border-slate-100 flex flex-col overflow-hidden">
+        {/* Sticky Header */}
+        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10 pt-safe bg-gradient-to-r from-emerald-50/50 to-teal-50/50">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center flex-shrink-0">
               <CheckCircle2 className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-900">To‘lovni qabul qilish</h3>
+              <h3 className="text-base font-bold text-slate-900">To'lovni qabul qilish</h3>
               <p className="text-xs text-slate-500">
-                {instance.recurringIncome.title} ({instance.yearMonth})
+                {instance.recurringIncome?.title || 'Mijoz'} ({instance.yearMonth})
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full text-slate-400 hover:bg-white hover:text-slate-600 transition-colors"
+            className="p-2 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Qarzdorlik kartochkasi */}
-        <div className="p-6 pb-2">
-          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 grid grid-cols-3 gap-2 text-center">
-            <div>
-              <p className="text-[10px] font-semibold uppercase text-slate-400">Kutilgan summa</p>
-              <p className="text-sm font-bold text-slate-800 mt-0.5">
-                {formatMoney(instance.expectedAmount)}
-              </p>
-            </div>
-            <div>
-              <p className="text-[10px] font-semibold uppercase text-slate-400">Oldin to‘langan</p>
-              <p className="text-sm font-bold text-emerald-600 mt-0.5">
-                {formatMoney(instance.paidAmount)}
-              </p>
-            </div>
-            <div>
-              <p className="text-[10px] font-semibold uppercase text-slate-400">Qolgan qarzdorlik</p>
-              <p className="text-sm font-extrabold text-rose-600 mt-0.5">
-                {formatMoney(remainingDebt)}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Xatolik */}
-        {error && (
-          <div className="mx-6 mb-2 p-3 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 text-xs flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 flex-shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
-
-        {/* Forma */}
-        <form onSubmit={handleSubmit} className="px-6 py-3 space-y-4 overflow-y-auto flex-1">
-          {/* To'lov summasi */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5">
-              Qabul qilinayotgan summa (so‘m)
-            </label>
-            <div className="relative">
-              <input
-                type="number"
-                min={1}
-                max={remainingDebt}
-                value={amount || ''}
-                onChange={(e) => setAmount(Number(e.target.value))}
-                className="w-full text-lg font-bold py-2.5 px-4 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                placeholder="Summani kiriting"
-                required
-              />
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
-                {amount !== remainingDebt && (
-                  <button
-                    type="button"
-                    onClick={() => setAmount(remainingDebt)}
-                    className="text-[11px] font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 px-2 py-1 rounded-md"
-                  >
-                    To‘liq yopish
-                  </button>
-                )}
-                <span className="text-xs font-semibold text-slate-400">UZS</span>
+        {/* Scrollable Form Body */}
+        <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+          <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-4">
+            {/* Qarzdorlik kartochkasi */}
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 grid grid-cols-3 gap-2 text-center">
+              <div>
+                <p className="text-[10px] font-bold uppercase text-slate-400">Kutilgan</p>
+                <p className="text-xs font-bold text-slate-800 mt-0.5 truncate">
+                  {formatMoney(instance.expectedAmount)}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase text-slate-400">To'langan</p>
+                <p className="text-xs font-bold text-emerald-600 mt-0.5 truncate">
+                  {formatMoney(instance.paidAmount)}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase text-slate-400">Qoldiq qarz</p>
+                <p className="text-xs font-black text-rose-600 mt-0.5 truncate">
+                  {formatMoney(remainingDebt)}
+                </p>
               </div>
             </div>
-            <p className="text-[11px] text-slate-500 mt-1">
-              Holat:{' '}
-              <span className={`font-semibold ${isFullPayment ? 'text-emerald-600' : 'text-amber-600'}`}>
-                {isFullPayment ? 'To‘liq to‘lanadi va qarz yopiladi' : `Qisman to‘lov (qoldiq: ${formatMoney(remainingDebt - amount)})`}
-              </span>
-            </p>
-          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {/* Sana */}
+            {error && (
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {/* To'lov summasi */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                <span>To‘lov sanasi</span>
-              </label>
-              <input
-                type="date"
-                value={paymentDate}
-                onChange={(e) => setPaymentDate(e.target.value)}
-                className="w-full py-2 px-3 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                required
-              />
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-bold text-slate-700">
+                  Qabul qilinayotgan summa (so'm) *
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setAmount(remainingDebt)}
+                  className="text-[10px] font-bold text-blue-600 hover:text-blue-700 underline"
+                >
+                  To'liq to'lash ({formatMoney(remainingDebt)})
+                </button>
+              </div>
+              <div className="relative">
+                <input
+                  type="number"
+                  min={1}
+                  max={remainingDebt}
+                  value={amount}
+                  onChange={(e) => setAmount(Number(e.target.value))}
+                  placeholder="Summani kiriting"
+                  className="w-full text-lg font-black py-2.5 px-4 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  required
+                  autoFocus
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
+                  UZS
+                </span>
+              </div>
             </div>
 
-            {/* Pul tushadigan hisob */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* To'lov sanasi */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
+                  <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                  <span>To'lov sanasi *</span>
+                </label>
+                <input
+                  type="date"
+                  value={paymentDate}
+                  onChange={(e) => setPaymentDate(e.target.value)}
+                  className="w-full py-2.5 px-3 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  required
+                />
+              </div>
+
+              {/* Kim oldi */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
+                  <UserCheck className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Kim qabul qildi? *</span>
+                </label>
+                <select
+                  value={receivedById}
+                  onChange={(e) => setReceivedById(e.target.value)}
+                  className="w-full py-2.5 px-3 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  required
+                >
+                  {users.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Qaysi hisobga */}
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
                 <Wallet className="w-3.5 h-3.5 text-slate-400" />
-                <span>Qaysi hisobga tushdi?</span>
+                <span>Qaysi hisobga / hamyonga tushdi? *</span>
               </label>
               <select
                 value={accountId}
                 onChange={(e) => setAccountId(e.target.value)}
-                className="w-full py-2 px-3 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="w-full py-2.5 px-3 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                 required
               >
                 {accounts.map((acc) => (
@@ -246,69 +264,39 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 ))}
               </select>
             </div>
-          </div>
 
-          {/* Qabul qilgan foydalanuvchi */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
-              <UserCheck className="w-3.5 h-3.5 text-slate-400" />
-              <span>Kim qabul qildi?</span>
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              {users.map((u) => {
-                const isSelected = receivedById === u.id;
-                return (
-                  <button
-                    key={u.id}
-                    type="button"
-                    onClick={() => setReceivedById(u.id)}
-                    className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-semibold transition-all ${
-                      isSelected
-                        ? 'border-blue-500 bg-blue-50 text-blue-700 ring-2 ring-blue-500/20'
-                        : 'border-slate-200 hover:bg-slate-50 text-slate-700'
-                    }`}
-                  >
-                    <div
-                      className="w-5 h-5 rounded-md flex items-center justify-center text-white text-[10px] font-bold"
-                      style={{ backgroundColor: u.avatarColor || '#2563eb' }}
-                    >
-                      {u.name[0]}
-                    </div>
-                    <span>{u.name}</span>
-                  </button>
-                );
-              })}
+            {/* Izoh */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
+                <FileText className="w-3.5 h-3.5 text-slate-400" />
+                <span>Izoh</span>
+              </label>
+              <input
+                type="text"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="To'lov haqida qo'shimcha ma'lumot"
+                className="w-full py-2.5 px-3 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+              />
             </div>
           </div>
 
-          {/* Izoh */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5">Izoh</label>
-            <input
-              type="text"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="Qo‘shimcha izoh yoki to‘lov cheki"
-              className="w-full py-2 px-3 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-            />
-          </div>
-
-          {/* Pastki tugmalar */}
-          <div className="pt-3 border-t border-slate-100 flex gap-2">
+          {/* Sticky Bottom Actions */}
+          <div className="p-4 sm:px-6 sm:py-4 bg-white/95 backdrop-blur border-t border-slate-100 flex items-center justify-end gap-3 sticky bottom-0 z-10 pb-safe">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-slate-50 transition-colors"
+              className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-slate-50 transition-colors"
             >
               Bekor qilish
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-md shadow-emerald-500/20 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
+              className="flex-1 sm:flex-initial px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-500/20 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 active:scale-95"
             >
-              <CheckCircle2 className="w-4 h-4" />
-              <span>{loading ? 'Saqlanmoqda...' : 'To‘lovni qabul qilish'}</span>
+              <CheckCircle2 className="w-4 h-4 stroke-[2.5]" />
+              <span>{loading ? 'Saqlanmoqda...' : "To'lovni qabul qilish"}</span>
             </button>
           </div>
         </form>

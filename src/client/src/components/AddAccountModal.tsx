@@ -102,7 +102,7 @@ export const AddAccountModal: React.FC<AddAccountModalProps> = ({
   const handleTransfer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fromAccountId || !toAccountId || !transferAmount || Number(transferAmount) <= 0) {
-      setError('Barcha maydonlarni to‘g‘ri to‘ldiring');
+      setError("Barcha maydonlarni to'g'ri to'ldiring");
       return;
     }
     if (fromAccountId === toAccountId) {
@@ -112,7 +112,7 @@ export const AddAccountModal: React.FC<AddAccountModalProps> = ({
 
     const fromAcc = accounts.find((a) => a.id === fromAccountId);
     if (fromAcc && fromAcc.balance < Number(transferAmount)) {
-      setError(`'${fromAcc.name}' hisobida yetarli mablag‘ yo‘q (${formatMoney(fromAcc.balance)})`);
+      setError(`'${fromAcc.name}' hisobida yetarli mablag' yo'q (${formatMoney(fromAcc.balance)})`);
       return;
     }
 
@@ -149,10 +149,10 @@ export const AddAccountModal: React.FC<AddAccountModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
-      <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[90vh]">
-        {/* Header */}
-        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+    <div className="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center sm:items-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
+      <div className="w-full h-full sm:h-auto sm:max-h-[92vh] sm:max-w-lg bg-white rounded-none sm:rounded-3xl shadow-2xl border-0 sm:border border-slate-100 flex flex-col overflow-hidden">
+        {/* Sticky Header */}
+        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10 pt-safe">
           <div className="flex gap-2 p-1 bg-slate-100 rounded-xl">
             <button
               type="button"
@@ -176,19 +176,19 @@ export const AddAccountModal: React.FC<AddAccountModalProps> = ({
               }`}
             >
               <ArrowRightLeft className="w-3.5 h-3.5" />
-              <span>Pul o‘tkazish</span>
+              <span>Pul o'tkazish</span>
             </button>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+            className="p-2 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {error && (
-          <div className="mx-6 mt-4 p-3 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 text-xs flex items-center gap-2">
+          <div className="mx-4 sm:mx-6 mt-3 p-3 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 text-xs flex items-center gap-2 flex-shrink-0">
             <AlertCircle className="w-4 h-4 flex-shrink-0" />
             <span>{error}</span>
           </div>
@@ -196,103 +196,99 @@ export const AddAccountModal: React.FC<AddAccountModalProps> = ({
 
         {mode === 'create' ? (
           /* YANGI HISOB YARATISH */
-          <form onSubmit={handleCreateAccount} className="px-6 py-4 space-y-3.5 overflow-y-auto flex-1">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Hisob nomi *
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Masalan: Naqd pul, Kassa, Kapitalbank karta"
-                className="w-full py-2 px-3 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                required
-              />
-            </div>
+          <form onSubmit={handleCreateAccount} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+            <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Hisob yoki hamyon nomi *
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Masalan: Asosiy Karta, Naqd pul g'aznasi"
+                  className="w-full py-2.5 px-3 text-xs font-bold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  required
+                  autoFocus
+                />
+              </div>
 
-            <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">Hisob turi</label>
                 <select
                   value={type}
                   onChange={(e) => setType(e.target.value)}
-                  className="w-full py-2 px-3 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  className="w-full py-2.5 px-3 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 >
-                  <option value="cash">Naqd pul</option>
-                  <option value="card">Bank karta</option>
-                  <option value="bank">Bank hisobi</option>
-                  <option value="other">Boshqa</option>
+                  <option value="cash">Naqd pul hamyoni</option>
+                  <option value="card">Bank plastik kartasi (Uzcard/Humo/Visa)</option>
+                  <option value="bank">Bank hisob raqami (Hisob-kitob varag'i)</option>
+                  <option value="other">Boshqa elektron hamyon</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Boshlang‘ich qoldiq (so‘m)
+                  Boshlang'ich qoldiq (so'm)
                 </label>
                 <input
                   type="number"
-                  min={0}
                   value={balance}
                   onChange={(e) => setBalance(e.target.value ? Number(e.target.value) : '')}
                   placeholder="0"
-                  className="w-full py-2 px-3 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  className="w-full py-2.5 px-3 text-xs font-bold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 />
               </div>
-            </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">Hisob rangi</label>
-              <div className="flex gap-2">
-                {['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ec4899', '#06b6d4'].map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => setColor(c)}
-                    className={`w-7 h-7 rounded-full border-2 transition-all ${
-                      color === c ? 'scale-110 border-slate-900 shadow-sm' : 'border-transparent'
-                    }`}
-                    style={{ backgroundColor: c }}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Rang belgisi</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={color}
+                    onChange={(e) => setColor(e.target.value)}
+                    className="w-9 h-9 rounded-xl border-0 cursor-pointer p-0"
                   />
-                ))}
+                  <span className="text-xs font-semibold text-slate-500">{color}</span>
+                </div>
               </div>
             </div>
 
-            <div className="pt-3 border-t border-slate-100 flex gap-2">
+            <div className="p-4 sm:px-6 sm:py-4 bg-white/95 backdrop-blur border-t border-slate-100 flex items-center justify-end gap-3 sticky bottom-0 z-10 pb-safe">
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-slate-50 transition-colors"
+                className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-slate-50 transition-colors"
               >
                 Bekor qilish
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-md shadow-blue-500/20 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
+                className="flex-1 sm:flex-initial px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 active:scale-95"
               >
-                <Wallet className="w-4 h-4" />
-                <span>{loading ? 'Saqlanmoqda...' : 'Hisobni ochish'}</span>
+                <Plus className="w-4 h-4 stroke-[2.5]" />
+                <span>{loading ? 'Saqlanmoqda...' : 'Hisobni saqlash'}</span>
               </button>
             </div>
           </form>
         ) : (
           /* PUL O'TKAZISH (TRANSFER) */
-          <form onSubmit={handleTransfer} className="px-6 py-4 space-y-3.5 overflow-y-auto flex-1">
-            <div className="grid grid-cols-2 gap-3">
+          <form onSubmit={handleTransfer} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+            <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Qaysi hisobdan? *
+                  Qaysi hisobdan (Chiquvchi) *
                 </label>
                 <select
                   value={fromAccountId}
                   onChange={(e) => setFromAccountId(e.target.value)}
-                  className="w-full py-2 px-3 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  className="w-full py-2.5 px-3 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   required
                 >
-                  {accounts.map((acc) => (
-                    <option key={acc.id} value={acc.id}>
-                      {acc.name} ({formatMoney(acc.balance)})
+                  {accounts.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.name} ({formatMoney(a.balance)})
                     </option>
                   ))}
                 </select>
@@ -300,69 +296,69 @@ export const AddAccountModal: React.FC<AddAccountModalProps> = ({
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Qaysi hisobga? *
+                  Qaysi hisobga (Kiruvchi) *
                 </label>
                 <select
                   value={toAccountId}
                   onChange={(e) => setToAccountId(e.target.value)}
-                  className="w-full py-2 px-3 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  className="w-full py-2.5 px-3 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   required
                 >
-                  {accounts.map((acc) => (
-                    <option key={acc.id} value={acc.id}>
-                      {acc.name} ({formatMoney(acc.balance)})
+                  {accounts.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.name} ({formatMoney(a.balance)})
                     </option>
                   ))}
                 </select>
               </div>
-            </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                O‘tkazma summasi (so‘m) *
-              </label>
-              <div className="relative">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  O'tkazma summasi (so'm) *
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    min={1}
+                    value={transferAmount}
+                    onChange={(e) => setTransferAmount(e.target.value ? Number(e.target.value) : '')}
+                    placeholder="Masalan: 200000"
+                    className="w-full text-base font-black py-2.5 px-4 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    required
+                  />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
+                    UZS
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Izoh</label>
                 <input
-                  type="number"
-                  min={1}
-                  value={transferAmount}
-                  onChange={(e) => setTransferAmount(e.target.value ? Number(e.target.value) : '')}
-                  placeholder="Summani kiriting"
-                  className="w-full text-base font-bold py-2 px-4 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                  required
+                  type="text"
+                  value={transferNote}
+                  onChange={(e) => setTransferNote(e.target.value)}
+                  placeholder="Masalan: Kartadan naqdlashtirish"
+                  className="w-full py-2.5 px-3 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">
-                  UZS
-                </span>
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">Izoh</label>
-              <input
-                type="text"
-                value={transferNote}
-                onChange={(e) => setTransferNote(e.target.value)}
-                placeholder="O‘tkazma sababi (masalan: Kartadan naqd yechib olindi)"
-                className="w-full py-2 px-3 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-              />
-            </div>
-
-            <div className="pt-3 border-t border-slate-100 flex gap-2">
+            <div className="p-4 sm:px-6 sm:py-4 bg-white/95 backdrop-blur border-t border-slate-100 flex items-center justify-end gap-3 sticky bottom-0 z-10 pb-safe">
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-slate-50 transition-colors"
+                className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-slate-50 transition-colors"
               >
                 Bekor qilish
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-md shadow-blue-500/20 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
+                className="flex-1 sm:flex-initial px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 active:scale-95"
               >
                 <ArrowRightLeft className="w-4 h-4" />
-                <span>{loading ? 'O‘tkazilmoqda...' : 'O‘tkazishni tasdiqlash'}</span>
+                <span>{loading ? 'Bajarilmoqda...' : "O'tkazishni tasdiqlash"}</span>
               </button>
             </div>
           </form>

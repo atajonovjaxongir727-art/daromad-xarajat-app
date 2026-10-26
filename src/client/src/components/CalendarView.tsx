@@ -207,9 +207,9 @@ export const CalendarView: React.FC = () => {
 
       {/* Tanlangan kun Tafsilotlari Modali */}
       {selectedDay && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[85vh]">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+        <div className="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center sm:items-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
+          <div className="w-full h-full sm:h-auto sm:max-h-[88vh] sm:max-w-md bg-white rounded-none sm:rounded-3xl shadow-2xl border-0 sm:border border-slate-100 overflow-hidden flex flex-col">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10 pt-safe">
               <div className="flex items-center gap-2.5">
                 <CalendarIcon className="w-5 h-5 text-blue-600" />
                 <div>
@@ -227,7 +227,7 @@ export const CalendarView: React.FC = () => {
               </button>
             </div>
 
-            <div className="p-6 space-y-4 overflow-y-auto flex-1">
+            <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1 pb-safe">
               {/* Daromadlar */}
               {selectedDay.incomes?.length > 0 && (
                 <div>

@@ -359,7 +359,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     key={item.id}
                     className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/60 p-2 rounded-2xl transition-colors"
                   >
-                    <div className="flex items-start gap-3">
+                    <div className="flex items-start gap-3 min-w-0 flex-1">
                       <div
                         className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
                           item.isOverdue ? 'bg-rose-100 text-rose-600' : 'bg-blue-100 text-blue-600'
@@ -373,7 +373,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h4 className="text-xs font-bold text-slate-900">{item.title}</h4>
+                          <h4 className="text-xs font-bold text-slate-900 truncate">{item.title}</h4>
                           {item.yearMonth === 'Oldingi qarz' && (
                             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200">
                               Oldingi qarz
@@ -388,7 +388,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between sm:justify-end gap-3">
+                    <div className="flex items-center justify-between sm:justify-end gap-3 flex-shrink-0 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
                       <div className="text-left sm:text-right">
                         <p className="text-xs font-extrabold text-slate-900">
                           {formatMoney(item.remainingAmount)}

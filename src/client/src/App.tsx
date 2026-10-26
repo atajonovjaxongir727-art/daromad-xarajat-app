@@ -117,7 +117,7 @@ const MainApp: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-['Plus_Jakarta_Sans',sans-serif]">
+    <div className="min-h-screen bg-slate-50 flex flex-col font-['Plus_Jakarta_Sans',sans-serif] overflow-x-hidden w-full max-w-full">
       {/* Top Navbar */}
       <Navbar
         onAddIncomeClick={() => setAddIncomeModalOpen(true)}
@@ -128,7 +128,7 @@ const MainApp: React.FC = () => {
       />
 
       {/* Asosiy Ish Maydoni (Sidebar + Content) */}
-      <div className="flex-1 flex max-w-[1600px] w-full mx-auto">
+      <div className="flex-1 flex max-w-[1600px] w-full mx-auto min-w-0 overflow-x-hidden">
         <Sidebar
           currentTab={currentTab}
           onSelectTab={handleSelectTab}
@@ -137,7 +137,7 @@ const MainApp: React.FC = () => {
           onCloseMobile={() => setMobileMenuOpen(false)}
         />
 
-        <main className="flex-1 p-4 lg:p-8 pb-24 lg:pb-8 overflow-y-auto">
+        <main className="flex-1 min-w-0 px-3 sm:px-6 lg:p-8 pt-3 sm:pt-6 pb-28 lg:pb-8 overflow-y-auto overflow-x-hidden">
           {/* Ogohlantirish banneri (agar kechikkan qarzlar bo'lsa) */}
           {dashboardData?.kpi?.overdueCount ? (
             <div className="mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200/80 text-rose-800 flex items-center justify-between shadow-sm animate-in fade-in">
