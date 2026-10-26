@@ -1,13 +1,21 @@
+databases:
+  - name: moliya-db
+    databaseName: moliya
+    user: moliya_user
+    plan: free
+
 services:
   - type: web
     name: moliya-boshqaruvi
     env: node
     plan: free
-    buildCommand: npm install && npx prisma generate && npx prisma db push && npm run build && npm run db:seed
+    buildCommand: npm install && npx prisma generate && npx prisma db push && npm run build
     startCommand: npm start
     envVars:
       - key: DATABASE_URL
-        value: file:./dev.db
+        fromDatabase:
+          name: moliya-db
+          property: connectionString
       - key: PORT
         value: 3000
       - key: NODE_ENV

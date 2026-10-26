@@ -3,6 +3,13 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
+  // Agar bazada allaqachon foydalanuvchilar bo'lsa, mavjud ma'lumotlarni o'chirib yubormaslik uchun to'xtatamiz
+  const existingUsers = await prisma.user.count();
+  if (existingUsers > 0) {
+    console.log('✅ Baza allaqachon mavjud ma'lumotlarga ega. Mavjud ma'lumotlarni saqlab qolish uchun seed o'tkazib yuborildi.');
+    return;
+  }
+
   console.log('🌱 Baza tozalanmoqda va demo ma\'lumotlar yuklanmoqda...');
 
   // 1. Foydalanuvchilar (Ali va Vali)
@@ -33,7 +40,7 @@ async function main() {
   // 2. Hisoblar / Hamyonlar (Section 20)
   const cashAccount = await prisma.account.upsert({
     where: { name: 'Naqd pul' },
-    update: { balance: 2000000 },
+    update: {},
     create: {
       name: 'Naqd pul',
       type: 'cash',
@@ -46,7 +53,7 @@ async function main() {
 
   const cardAccount = await prisma.account.upsert({
     where: { name: 'Bank karta (Uzcard/Humo)' },
-    update: { balance: 5000000 },
+    update: {},
     create: {
       name: 'Bank karta (Uzcard/Humo)',
       type: 'card',
@@ -59,7 +66,7 @@ async function main() {
 
   const bankAccount = await prisma.account.upsert({
     where: { name: 'Bank hisob raqami' },
-    update: { balance: 10000000 },
+    update: {},
     create: {
       name: 'Bank hisob raqami',
       type: 'bank',

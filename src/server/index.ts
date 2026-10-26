@@ -16,6 +16,7 @@ import calendarRoutes from './routes/calendar.js';
 import transactionsRoutes from './routes/transactions.js';
 import auditRoutes from './routes/audit.js';
 import { syncRecurringDebts } from './services/syncService.js';
+import { startKeepAliveService } from './services/keepAliveService.js';
 
 dotenv.config();
 
@@ -65,6 +66,8 @@ app.use((req, res, next) => {
 });
 
 app.listen(PORT, async () => {
+  // Render Free 15 daqiqalik uxlab qolishini oldini oluvchi avtomatik ping
+  startKeepAliveService();
   console.log(`🚀 Moliyaviy tizim to‘liq ishga tushdi: http://localhost:${PORT}`);
   try {
     const syncRes = await syncRecurringDebts();
