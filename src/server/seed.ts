@@ -6,7 +6,7 @@ async function main() {
   // Agar bazada allaqachon foydalanuvchilar bo'lsa, mavjud ma'lumotlarni o'chirib yubormaslik uchun to'xtatamiz
   const existingUsers = await prisma.user.count();
   if (existingUsers > 0) {
-    console.log('✅ Baza allaqachon mavjud ma'lumotlarga ega. Mavjud ma'lumotlarni saqlab qolish uchun seed o'tkazib yuborildi.');
+    console.log("✅ Baza allaqachon mavjud ma'lumotlarga ega. Mavjud ma'lumotlarni saqlab qolish uchun seed o'tkazib yuborildi.");
     return;
   }
 
