@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, PlusCircle, AlertCircle, Calendar, Wallet, UserCheck, Tag, CreditCard } from 'lucide-react';
-import { Account, User } from '../types';
+import { Account, User, RecurringIncome } from '../types';
 import { useAuth } from '../context/AuthContext';
 
 interface AddIncomeModalProps {
@@ -29,6 +29,8 @@ export const AddIncomeModal: React.FC<AddIncomeModalProps> = ({
   const [note, setNote] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
+  const [recurringSources, setRecurringSources] = useState<RecurringIncome[]>([]);
+  const [isCustomSource, setIsCustomSource] = useState<boolean>(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -40,9 +42,19 @@ export const AddIncomeModal: React.FC<AddIncomeModalProps> = ({
         setPaymentMethod(accounts[0].type);
       }
       setSource('');
-      setCategory('Bir martalik daromad');
+      setIsCustomSource(false);
+      setCategory('Mijoz to‘lovi');
       setNote('');
       setError('');
+
+      fetch('/api/recurring')
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && Array.isArray(data.data)) {
+            setRecurringSources(data.data.filter((item: RecurringIncome) => item.isActive));
+          }
+        })
+        .catch((err) => console.error('Fetch recurring error in AddIncomeModal:', err));
     }
   }, [isOpen, currentUser, users, accounts]);
 
@@ -184,16 +196,62 @@ export const AddIncomeModal: React.FC<AddIncomeModalProps> = ({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {/* Kimdan */}
+            {/* Kimdan / Manba */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">Kimdan / Manba</label>
-              <input
-                type="text"
-                value={source}
-                onChange={(e) => setSource(e.target.value)}
-                placeholder="Mijoz yoki korxona nomi"
-                className="w-full py-2 px-3 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-              />
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-bold text-slate-700">Kimdan / Manba *</label>
+                {recurringSources.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsCustomSource(!isCustomSource);
+                      setSource('');
+                    }}
+                    className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 underline"
+                  >
+                    {isCustomSource ? "Ro‘yxatdan tanlash" : "Qo‘lda yozish"}
+                  </button>
+                )}
+              </div>
+
+              {!isCustomSource && recurringSources.length > 0 ? (
+                <select
+                  value={source}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '__OTHER__') {
+                      setIsCustomSource(true);
+                      setSource('');
+                    } else {
+                      setSource(val);
+                      const matched = recurringSources.find((r) => r.title === val);
+                      if (matched) {
+                        if (!amount) setAmount(matched.amount);
+                        if (matched.category) setCategory(matched.category);
+                      }
+                    }
+                  }}
+                  className="w-full py-2 px-3 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  required
+                >
+                  <option value="">-- Manbani tanlang --</option>
+                  {recurringSources.map((r) => (
+                    <option key={r.id} value={r.title}>
+                      {r.title} ({new Intl.NumberFormat('uz-UZ').format(r.amount)} so‘m/oy)
+                    </option>
+                  ))}
+                  <option value="__OTHER__">➕ Boshqa (qo‘lda yozish)...</option>
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  value={source}
+                  onChange={(e) => setSource(e.target.value)}
+                  placeholder="Mijoz yoki korxona nomi"
+                  className="w-full py-2 px-3 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  required
+                />
+              )}
             </div>
 
             {/* Daromad turi */}

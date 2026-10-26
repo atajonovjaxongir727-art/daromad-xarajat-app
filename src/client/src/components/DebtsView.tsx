@@ -13,7 +13,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { RecurringIncomeInstance, User } from '../types';
-import { formatMoney, formatDate, getStatusInfo } from '../utils/formatters';
+import { formatMoney, formatDate, getStatusInfo, getMonthName } from '../utils/formatters';
 
 interface DebtsViewProps {
   onOpenPaymentModal: (instance: RecurringIncomeInstance) => void;
@@ -196,7 +196,7 @@ export const DebtsView: React.FC<DebtsViewProps> = ({ onOpenPaymentModal, users 
                       <div>
                         <div className="flex items-center gap-2">
                           <h4 className="text-sm font-bold text-slate-900">
-                            {item.recurringIncome.title}
+                            {item.recurringIncome?.title || 'Noma‘lum manba'}
                           </h4>
                           {item.yearMonth === 'Oldingi qarz' ? (
                             <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-200">
@@ -217,7 +217,7 @@ export const DebtsView: React.FC<DebtsViewProps> = ({ onOpenPaymentModal, users 
                           <span>•</span>
                           <span className="flex items-center gap-1">
                             <UserCheck className="w-3.5 h-3.5 text-slate-400" />
-                            <span>Mas‘ul: {item.assignedUser.name}</span>
+                            <span>Mas‘ul: {item.assignedUser?.name || 'Noma‘lum'}</span>
                           </span>
                           {item.isOverdue && item.overdueDays ? (
                             <>
