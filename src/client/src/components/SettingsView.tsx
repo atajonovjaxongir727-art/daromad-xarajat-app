@@ -11,6 +11,8 @@ import {
   Activity,
   Save,
   Users,
+  Smartphone,
+  Download,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -142,6 +144,35 @@ export const SettingsView: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-5xl">
+      {/* Android Mobil Ilova (APK) Yuklab Olish */}
+      <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white shadow-xl shadow-blue-500/20 flex flex-col sm:flex-row items-center justify-between gap-4 border border-blue-400/30">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center flex-shrink-0 border border-white/25 shadow-inner">
+            <Smartphone className="w-8 h-8 text-white" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-base font-extrabold text-white">Android Mobil Ilova (.APK)</h3>
+              <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-400 text-slate-950 uppercase tracking-wider">
+                Tayyor v1.0
+              </span>
+            </div>
+            <p className="text-xs text-blue-100 mt-1 leading-relaxed">
+              Telefoningizga o‘rnatib, brauzersiz, to‘liq ekranda qulay, tezkor va professional tarzda ishlatishingiz mumkin.
+            </p>
+          </div>
+        </div>
+
+        <a
+          href="/Daromad-Xarajat.apk"
+          download="Daromad-Xarajat.apk"
+          className="w-full sm:w-auto px-5 py-3.5 rounded-2xl bg-white hover:bg-blue-50 text-blue-600 text-xs font-black shadow-lg transition-all flex items-center justify-center gap-2 flex-shrink-0 active:scale-95"
+        >
+          <Download className="w-4 h-4 stroke-[2.5]" />
+          <span>APK ni Yuklab Olish (5.6 MB)</span>
+        </a>
+      </div>
+
       {/* Sarlavha */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm">
         <div className="flex items-center gap-3">

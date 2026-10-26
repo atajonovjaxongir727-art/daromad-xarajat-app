@@ -1,4 +1,4 @@
-node_modules/
+﻿node_modules/
 dev.db
 dev.db-journal
 .env
@@ -8,3 +8,7 @@ yarn-debug.log*
 yarn-error.log*
 .DS_Store
 Thumbs.db
+android/app/build/
+android/.gradle/
+android/local.properties
+/Daromad-Xarajat.apk
