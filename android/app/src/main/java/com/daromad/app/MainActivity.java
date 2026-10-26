@@ -83,13 +83,18 @@ public class MainActivity extends AppCompatActivity {
         settings.setDisplayZoomControls(false);
         settings.setAllowFileAccess(true);
         settings.setMediaPlaybackRequiresUserGesture(false);
+        settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
+        webView.clearCache(true);
 
         CookieManager cookieManager = CookieManager.getInstance();
         cookieManager.setAcceptCookie(true);
         cookieManager.setAcceptThirdPartyCookies(webView, true);
 
         // Pull to refresh listener
-        swipeRefresh.setOnRefreshListener(() -> webView.reload());
+        swipeRefresh.setOnRefreshListener(() -> {
+            webView.clearCache(true);
+            webView.reload();
+        });
 
         // WebViewClient
         webView.setWebViewClient(new WebViewClient() {
@@ -166,7 +171,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // Load the live cloud app
-        webView.loadUrl(APP_URL);
+        webView.loadUrl(APP_URL + "?v=" + System.currentTimeMillis());
     }
 
     @Override
