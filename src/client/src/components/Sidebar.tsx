@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import {
   LayoutDashboard,
   TrendingUp,
@@ -11,6 +11,7 @@ import {
   History,
   ShieldCheck,
   FileSpreadsheet,
+  Settings,
   X,
 } from 'lucide-react';
 
@@ -25,7 +26,8 @@ export type TabType =
   | 'calendar'
   | 'history'
   | 'audit'
-  | 'export';
+  | 'export'
+  | 'settings';
 
 interface SidebarProps {
   currentTab: TabType;
@@ -60,6 +62,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'history', label: 'Tarix', icon: History },
     { id: 'audit', label: 'Audit jurnali', icon: ShieldCheck },
     { id: 'export', label: 'Eksport (Excel/PDF)', icon: FileSpreadsheet },
+    { id: 'settings', label: 'Sozlamalar (Profil & PIN)', icon: Settings },
   ];
 
   const handleSelect = (tab: TabType) => {
@@ -144,3 +147,4 @@ export const Sidebar: React.FC<SidebarProps> = ({
     </>
   );
 };
+

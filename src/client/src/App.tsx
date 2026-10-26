@@ -21,6 +21,7 @@ import { AddRecurringModal } from './components/AddRecurringModal';
 import { AddAccountModal } from './components/AddAccountModal';
 import { UserPinModal } from './components/UserPinModal';
 import { ProfileSettingsModal } from './components/ProfileSettingsModal';
+import { SettingsView } from './components/SettingsView';
 import { ExportModal } from './components/ExportModal';
 
 import {
@@ -213,6 +214,7 @@ const MainApp: React.FC = () => {
           )}
 
           {currentTab === 'audit' && <AuditLogView />}
+          {currentTab === 'settings' && <SettingsView />}
         </main>
       </div>
 
@@ -281,4 +283,5 @@ export const App: React.FC = () => {
 };
 
 export default App;
+
 

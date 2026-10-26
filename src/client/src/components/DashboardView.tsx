@@ -12,7 +12,9 @@ import {
   ChevronRight,
   ArrowRightLeft,
   Calendar,
+  Edit2,
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import { DashboardData } from '../types';
 import { formatMoney, formatDate, getStatusInfo, getMonthName } from '../utils/formatters';
 
@@ -33,6 +35,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onNavigateToTab,
   onOpenTransferModal,
 }) => {
+  const { setProfileModalOpen } = useAuth();
+
   if (!data) {
     return (
       <div className="flex items-center justify-center p-12 text-slate-400 text-sm">
@@ -465,4 +469,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     </div>
   );
 };
+
+
+
 
