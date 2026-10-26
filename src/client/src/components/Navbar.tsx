@@ -1,12 +1,12 @@
-import React from 'react';
+﻿import React from 'react';
 import {
   Bell,
   PlusCircle,
   MinusCircle,
-  UserCheck,
   RefreshCw,
   Wallet,
   Menu,
+  Settings,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { formatDate } from '../utils/formatters';
@@ -26,7 +26,13 @@ export const Navbar: React.FC<NavbarProps> = ({
   todayDate,
   onMobileMenuToggle,
 }) => {
-  const { currentUser, allUsers, setSwitchUserModalOpen, setTargetUserForSwitch } = useAuth();
+  const {
+    currentUser,
+    allUsers,
+    setSwitchUserModalOpen,
+    setTargetUserForSwitch,
+    setProfileModalOpen,
+  } = useAuth();
   const [showNotifications, setShowNotifications] = React.useState(false);
 
   const otherUser = allUsers.find((u) => u.id !== currentUser?.id);
@@ -37,6 +43,11 @@ export const Navbar: React.FC<NavbarProps> = ({
       setSwitchUserModalOpen(true);
     }
   };
+
+  const usersSubtitle =
+    allUsers.length > 0
+      ? `${allUsers.map((u) => u.name).join(' va ')} uchun daromad & xarajatlar tizimi`
+      : 'Daromad & xarajatlar boshqaruv tizimi';
 
   return (
     <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 lg:px-8 py-3 transition-all">
@@ -60,7 +71,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 Moliya Boshqaruvi
               </h1>
               <p className="text-xs text-slate-500 hidden sm:block">
-                Ali va Vali uchun daromad & xarajatlar tizimi
+                {usersSubtitle}
               </p>
             </div>
           </div>
@@ -71,7 +82,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Bugungi sana */}
           <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 text-xs font-semibold text-slate-600">
             <span>Bugun:</span>
-            <span className="text-slate-900">{formatDate(todayDate) || '02.10.2026'}</span>
+            <span className="text-slate-900">{formatDate(todayDate) || '26.10.2026'}</span>
           </div>
 
           {/* Xabarnomalar qo'ng'irog'i */}
@@ -116,23 +127,39 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
           </div>
 
-          {/* Faol Foydalanuvchi va Almashtirish */}
+          {/* Faol Foydalanuvchi, Sozlamalar va Almashtirish */}
           {currentUser && (
             <div className="flex items-center bg-slate-100/80 hover:bg-slate-200/60 transition-colors rounded-xl p-1 pl-1.5 pr-2.5 gap-2 border border-slate-200/60">
               <div
-                className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold shadow-sm"
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold shadow-sm cursor-pointer"
                 style={{ backgroundColor: currentUser.avatarColor || '#2563eb' }}
+                onClick={() => setProfileModalOpen(true)}
+                title="Profil sozlamalari"
               >
                 {currentUser.name[0]}
               </div>
-              <div className="text-left hidden sm:block">
+              <div
+                className="text-left hidden sm:block cursor-pointer"
+                onClick={() => setProfileModalOpen(true)}
+                title="Profil sozlamalari"
+              >
                 <p className="text-xs font-bold text-slate-900 leading-none">{currentUser.name}</p>
-                <p className="text-[10px] text-slate-500 leading-none mt-0.5">Faol profil</p>
+                <p className="text-[10px] text-slate-500 leading-none mt-0.5">Sozlamalar</p>
               </div>
+
+              {/* Sozlamalar (Profil / PIN almashtirish) tugmasi */}
+              <button
+                onClick={() => setProfileModalOpen(true)}
+                className="p-1 rounded-md hover:bg-white text-slate-500 hover:text-blue-600 transition-colors"
+                title="Ism va PIN kodni o‘zgartirish"
+              >
+                <Settings className="w-3.5 h-3.5" />
+              </button>
+
               {otherUser && (
                 <button
                   onClick={handleSwitchClick}
-                  className="ml-1 p-1 rounded-md hover:bg-white text-slate-500 hover:text-blue-600 transition-colors"
+                  className="p-1 rounded-md hover:bg-white text-slate-500 hover:text-blue-600 transition-colors"
                   title={`${otherUser.name} profiliga o‘tish`}
                 >
                   <RefreshCw className="w-3.5 h-3.5" />

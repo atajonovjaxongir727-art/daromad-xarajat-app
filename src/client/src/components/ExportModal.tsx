@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { X, FileSpreadsheet, FileText, Printer, CheckCircle, Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { formatMoney, formatDate } from '../utils/formatters';
@@ -49,8 +49,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         ['To‘langan qarzlar', kpi.totalPaidDebts || 0],
         [],
         ['FOYDALANUVCHILAR BO‘YICHA', 'DAROMAD', 'XARAJAT', 'SOF BALANS'],
-        ['Ali', users.ali?.income || 0, users.ali?.expense || 0, users.ali?.balance || 0],
-        ['Vali', users.vali?.income || 0, users.vali?.expense || 0, users.vali?.balance || 0],
+        [users.ali?.name || '1-foydalanuvchi', users.ali?.income || 0, users.ali?.expense || 0, users.ali?.balance || 0],
+        [users.vali?.name || '2-foydalanuvchi', users.vali?.income || 0, users.vali?.expense || 0, users.vali?.balance || 0],
         ['JAMI (UMUMIY)', users.total?.income || 0, users.total?.expense || 0, users.total?.balance || 0],
       ];
       const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
@@ -267,3 +267,4 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     </div>
   );
 };
+

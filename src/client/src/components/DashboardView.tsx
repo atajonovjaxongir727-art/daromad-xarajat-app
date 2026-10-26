@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import {
   TrendingUp,
   TrendingDown,
@@ -59,7 +59,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             Moliyaviy Ko‘rsatkichlar — {selectedMonth === 'ALL' ? 'Barcha davrlar' : getMonthName(selectedMonth)}
           </h2>
           <p className="text-xs text-slate-500">
-            Ali va Vali uchun daromad, xarajat va hisoblangan sof qoldiq
+            {users.ali?.name || '1-foydalanuvchi'} va {users.vali?.name || '2-foydalanuvchi'} uchun daromad, xarajat va hisoblangan sof qoldiq
           </p>
         </div>
 
@@ -465,3 +465,4 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     </div>
   );
 };
+

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Lock, X, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -54,9 +54,6 @@ export const UserPinModal: React.FC = () => {
           <p className="text-xs text-slate-500 mt-1">
             Davom etish uchun 4 xonali PIN kodni kiriting
           </p>
-          <p className="text-[11px] text-blue-600 font-medium mt-1">
-            (Demo PIN: Ali uchun 1234, Vali uchun 5678)
-          </p>
         </div>
 
         {error && (
@@ -103,3 +100,4 @@ export const UserPinModal: React.FC = () => {
     </div>
   );
 };
+

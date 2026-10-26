@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Navbar } from './components/Navbar';
 import { Sidebar, TabType } from './components/Sidebar';
@@ -20,6 +20,7 @@ import { AddExpenseModal } from './components/AddExpenseModal';
 import { AddRecurringModal } from './components/AddRecurringModal';
 import { AddAccountModal } from './components/AddAccountModal';
 import { UserPinModal } from './components/UserPinModal';
+import { ProfileSettingsModal } from './components/ProfileSettingsModal';
 import { ExportModal } from './components/ExportModal';
 
 import {
@@ -217,6 +218,7 @@ const MainApp: React.FC = () => {
 
       {/* Global Modallar */}
       <UserPinModal />
+      <ProfileSettingsModal />
 
       <PaymentModal
         isOpen={paymentModalOpen}
@@ -279,3 +281,4 @@ export const App: React.FC = () => {
 };
 
 export default App;
+

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { User } from '../types';
 
 interface AuthContextType {
@@ -9,6 +9,10 @@ interface AuthContextType {
   setSwitchUserModalOpen: (open: boolean) => void;
   targetUserForSwitch: User | null;
   setTargetUserForSwitch: (u: User | null) => void;
+  profileModalOpen: boolean;
+  setProfileModalOpen: (open: boolean) => void;
+  updateUser: (userId: string, data: { name?: string; pin?: string; avatarColor?: string }) => Promise<{ success: boolean; message?: string }>;
+  refreshUsers: () => Promise<void>;
   logout: () => void;
 }
 
@@ -19,19 +23,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [switchUserModalOpen, setSwitchUserModalOpen] = useState(false);
   const [targetUserForSwitch, setTargetUserForSwitch] = useState<User | null>(null);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const res = await fetch('/api/auth/users');
       const data = await res.json();
       if (data.success && data.data) {
         setAllUsers(data.data);
-        // Agar avval saqlangan foydalanuvchi bo'lmasa, birinchisini (Ali) tanlash
         const savedUserId = localStorage.getItem('active_user_id');
         if (savedUserId) {
           const found = data.data.find((u: User) => u.id === savedUserId);
           if (found) setCurrentUser(found);
-          else setCurrentUser(data.data[0]);
+          else if (data.data.length > 0) setCurrentUser(data.data[0]);
         } else if (data.data.length > 0) {
           setCurrentUser(data.data[0]);
           localStorage.setItem('active_user_id', data.data[0].id);
@@ -40,11 +44,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err) {
       console.error('Fetch users error:', err);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [fetchUsers]);
 
   const login = async (userId: string, pin: string): Promise<{ success: boolean; message?: string }> => {
     try {
@@ -67,6 +71,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updateUser = async (
+    userId: string,
+    data: { name?: string; pin?: string; avatarColor?: string }
+  ): Promise<{ success: boolean; message?: string }> => {
+    try {
+      const res = await fetch(`/api/auth/users/${userId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const resData = await res.json();
+      if (resData.success) {
+        await fetchUsers();
+        if (currentUser?.id === userId) {
+          setCurrentUser(resData.data);
+        }
+        return { success: true, message: resData.message };
+      }
+      return { success: false, message: resData.message || 'Yangilashda xatolik yuz berdi' };
+    } catch (err: any) {
+      return { success: false, message: err.message || 'Serverga ulanishda xatolik' };
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('active_user_id');
     setCurrentUser(null);
@@ -82,6 +110,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSwitchUserModalOpen,
         targetUserForSwitch,
         setTargetUserForSwitch,
+        profileModalOpen,
+        setProfileModalOpen,
+        updateUser,
+        refreshUsers: fetchUsers,
         logout,
       }}
     >

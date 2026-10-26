@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   BarChart,
   Bar,
@@ -56,7 +56,9 @@ export const ReportsView: React.FC = () => {
     { ym: '2026-12', label: 'Dekabr 2026' },
   ];
 
-  const summary = data?.summary || {};
+    const summary = data?.summary || {};
+  const user1Name = summary.user1Name || '1-foydalanuvchi';
+  const user2Name = summary.user2Name || '2-foydalanuvchi';
   const categoryExpenses = data?.categoryExpenses || [];
   const trendData = data?.trendData || [];
 
@@ -68,13 +70,13 @@ export const ReportsView: React.FC = () => {
   // Foydalanuvchilar taqqoslash ma'lumotlari
   const userComparisonData = [
     {
-      name: 'Ali',
+      name: user1Name,
       daromad: summary.aliIncome || 0,
       xarajat: summary.aliExpense || 0,
       balans: summary.aliBalance || 0,
     },
     {
-      name: 'Vali',
+      name: user2Name,
       daromad: summary.valiIncome || 0,
       xarajat: summary.valiExpense || 0,
       balans: summary.valiBalance || 0,
@@ -171,10 +173,8 @@ export const ReportsView: React.FC = () => {
             <div className="p-5 rounded-3xl bg-white border border-slate-200/80 shadow-sm">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-blue-600 text-white font-bold text-xs flex items-center justify-center">
-                    A
-                  </div>
-                  <h4 className="text-sm font-bold text-slate-900">Ali ({getMonthName(yearMonth)})</h4>
+                  <div className="w-7 h-7 rounded-lg text-white font-bold text-xs flex items-center justify-center" style={{ backgroundColor: summary.user1Color || "#2563eb" }}>{user1Name[0]}</div>
+                  <h4 className="text-sm font-bold text-slate-900">{user1Name} ({getMonthName(yearMonth)})</h4>
                 </div>
                 <span className="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
                   Foydalanuvchi 1
@@ -210,10 +210,8 @@ export const ReportsView: React.FC = () => {
             <div className="p-5 rounded-3xl bg-white border border-slate-200/80 shadow-sm">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white font-bold text-xs flex items-center justify-center">
-                    V
-                  </div>
-                  <h4 className="text-sm font-bold text-slate-900">Vali ({getMonthName(yearMonth)})</h4>
+                  <div className="w-7 h-7 rounded-lg text-white font-bold text-xs flex items-center justify-center" style={{ backgroundColor: summary.user2Color || "#10b981" }}>{user2Name[0]}</div>
+                  <h4 className="text-sm font-bold text-slate-900">V{user1Name} ({getMonthName(yearMonth)})</h4>
                 </div>
                 <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
                   Foydalanuvchi 2
@@ -321,7 +319,7 @@ export const ReportsView: React.FC = () => {
             {/* Foydalanuvchilar taqqoslash grafigi */}
             <div className="p-5 rounded-3xl bg-white border border-slate-200/80 shadow-sm">
               <h3 className="text-sm font-bold text-slate-900 mb-1">
-                Ali va Vali taqqoslashi
+                {user1Name} va {user2Name} taqqoslashi
               </h3>
               <p className="text-xs text-slate-400 mb-4">{getMonthName(yearMonth)} oyi bo‘yicha</p>
 
@@ -352,3 +350,4 @@ export const ReportsView: React.FC = () => {
     </div>
   );
 };
+

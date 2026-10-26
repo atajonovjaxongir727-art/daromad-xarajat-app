@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+﻿import { PrismaClient } from '@prisma/client';
 import { getTodayString, getCurrentYearMonth } from './syncService.js';
 
 const prisma = new PrismaClient();
@@ -9,12 +9,12 @@ export async function getDashboardSummary(selectedMonth?: string) {
   const currentYM = isAllTime ? 'ALL' : (selectedMonth || getCurrentYearMonth());
 
   // Foydalanuvchilarni olish
-  const users = await prisma.user.findMany({
-    orderBy: { name: 'asc' },
+    const users = await prisma.user.findMany({
+    orderBy: { createdAt: 'asc' },
   });
 
-  const ali = users.find((u) => u.name === 'Ali') || users[0];
-  const vali = users.find((u) => u.name === 'Vali') || users[1];
+  const ali = users[0];
+  const vali = users[1];
 
   // Tanlangan oy yoki umumiy vaqt bo'yicha daromadlar
   const incomeWhere: any = {};
@@ -204,6 +204,12 @@ export async function getDetailedReport(yearMonth: string) {
     include: { recurringIncome: true, assignedUser: true, payments: true },
   });
 
+    const users = await prisma.user.findMany({
+    orderBy: { createdAt: 'asc' },
+  });
+  const user1 = users[0];
+  const user2 = users[1];
+
   let totalIncome = 0;
   let totalExpense = 0;
   let aliIncome = 0;
@@ -213,14 +219,18 @@ export async function getDetailedReport(yearMonth: string) {
 
   for (const inc of incomes) {
     totalIncome += inc.amount;
-    if (inc.user.name === 'Ali') aliIncome += inc.amount;
-    if (inc.user.name === 'Vali') valiIncome += inc.amount;
+    if (user1 && inc.userId === user1.id) aliIncome += inc.amount;
+    else if (user2 && inc.userId === user2.id) valiIncome += inc.amount;
+    else if (inc.user?.name === 'Ali') aliIncome += inc.amount;
+    else if (inc.user?.name === 'Vali') valiIncome += inc.amount;
   }
 
   for (const exp of expenses) {
     totalExpense += exp.amount;
-    if (exp.user.name === 'Ali') aliExpense += exp.amount;
-    if (exp.user.name === 'Vali') valiExpense += exp.amount;
+    if (user1 && exp.userId === user1.id) aliExpense += exp.amount;
+    else if (user2 && exp.userId === user2.id) valiExpense += exp.amount;
+    else if (exp.user?.name === 'Ali') aliExpense += exp.amount;
+    else if (exp.user?.name === 'Vali') valiExpense += exp.amount;
   }
 
   let totalReceivable = 0;
@@ -315,6 +325,10 @@ export async function getDetailedReport(yearMonth: string) {
       valiExpense,
       aliBalance: aliIncome - aliExpense,
       valiBalance: valiIncome - valiExpense,
+      user1Name: user1?.name || '1-foydalanuvchi',
+      user2Name: user2?.name || '2-foydalanuvchi',
+      user1Color: user1?.avatarColor || '#2563eb',
+      user2Color: user2?.avatarColor || '#10b981',
     },
     categoryExpenses,
     trendData,
@@ -323,3 +337,5 @@ export async function getDetailedReport(yearMonth: string) {
     debts: instances,
   };
 }
+
+
