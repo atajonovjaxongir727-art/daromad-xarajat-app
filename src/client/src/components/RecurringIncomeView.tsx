@@ -11,7 +11,10 @@ import {
   Clock,
   RotateCcw,
   X,
-  ShieldAlert,
+  ShieldCheck,
+  DollarSign,
+  Tag,
+  FileText,
 } from 'lucide-react';
 import { RecurringIncome, User } from '../types';
 import { formatMoney } from '../utils/formatters';
@@ -29,10 +32,19 @@ export const RecurringIncomeView: React.FC<RecurringIncomeViewProps> = ({
   const { currentUser } = useAuth();
   const [items, setItems] = useState<RecurringIncome[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Tahrirlash holatlari
   const [editingItem, setEditingItem] = useState<RecurringIncome | null>(null);
+  const [editTitle, setEditTitle] = useState<string>('');
   const [editAmount, setEditAmount] = useState<number | ''>('');
+  const [editInitialDebt, setEditInitialDebt] = useState<number | ''>('');
   const [editBillingDay, setEditBillingDay] = useState<number>(10);
   const [editAssignedUser, setEditAssignedUser] = useState<string>('');
+  const [editCategory, setEditCategory] = useState<string>("Mijoz to'lovi");
+  const [editStartDate, setEditStartDate] = useState<string>('');
+  const [editNote, setEditNote] = useState<string>('');
+  const [editIsActive, setEditIsActive] = useState<boolean>(true);
+  const [editError, setEditError] = useState<string>('');
   const [actionLoading, setActionLoading] = useState(false);
 
   const fetchItems = async () => {
@@ -86,24 +98,56 @@ export const RecurringIncomeView: React.FC<RecurringIncomeViewProps> = ({
 
   const startEdit = (item: RecurringIncome) => {
     setEditingItem(item);
+    setEditTitle(item.title || '');
     setEditAmount(item.amount);
-    setEditBillingDay(item.billingDay);
-    setEditAssignedUser(item.assignedUserId);
+    setEditInitialDebt(
+      item.initialDebt !== undefined && item.initialDebt !== null && item.initialDebt > 0
+        ? item.initialDebt
+        : ''
+    );
+    setEditBillingDay(item.billingDay || 10);
+    setEditAssignedUser(item.assignedUserId || (users[0]?.id || ''));
+    setEditCategory(item.category || "Mijoz to'lovi");
+    setEditStartDate(item.startDate || '');
+    setEditNote(item.note || '');
+    setEditIsActive(item.isActive !== false);
+    setEditError('');
   };
 
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingItem || !editAmount || Number(editAmount) <= 0) return;
+    if (!editingItem) return;
+
+    if (!editTitle.trim()) {
+      setEditError("Mijoz yoki manba nomini kiriting");
+      return;
+    }
+    if (!editAmount || Number(editAmount) <= 0) {
+      setEditError("Oylik to'lov summasi 0 dan katta bo'lishi kerak");
+      return;
+    }
+    if (!editAssignedUser) {
+      setEditError("Mas'ul foydalanuvchini tanlang");
+      return;
+    }
 
     setActionLoading(true);
+    setEditError('');
+
     try {
       const res = await fetch(`/api/recurring/${editingItem.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          title: editTitle.trim(),
           amount: Number(editAmount),
+          initialDebt: editInitialDebt !== '' ? Number(editInitialDebt) : 0,
           billingDay: Number(editBillingDay),
           assignedUserId: editAssignedUser,
+          category: editCategory.trim() || "Mijoz to'lovi",
+          startDate: editStartDate || editingItem.startDate,
+          note: editNote.trim(),
+          isActive: editIsActive,
           currentUserId: currentUser?.id,
           currentUserName: currentUser?.name,
         }),
@@ -114,10 +158,10 @@ export const RecurringIncomeView: React.FC<RecurringIncomeViewProps> = ({
         setEditingItem(null);
         fetchItems();
       } else {
-        alert(data.message || 'Xatolik');
+        setEditError(data.message || 'Xatolik yuz berdi');
       }
     } catch (err: any) {
-      alert('Xatolik: ' + err.message);
+      setEditError('Xatolik: ' + err.message);
     } finally {
       setActionLoading(false);
     }
@@ -127,6 +171,14 @@ export const RecurringIncomeView: React.FC<RecurringIncomeViewProps> = ({
   const totalMonthly = items
     .filter((i) => i.isActive)
     .reduce((sum, i) => sum + i.amount, 0);
+
+  const quickCategories = [
+    "Mijoz to'lovi",
+    "Ijara to'lovi",
+    "Xizmat ko'rsatish",
+    "Konsalting",
+    "Savdo",
+  ];
 
   return (
     <div className="space-y-4 sm:space-y-6 max-w-full">
@@ -193,7 +245,7 @@ export const RecurringIncomeView: React.FC<RecurringIncomeViewProps> = ({
         </div>
       ) : (
         <>
-          {/* 1. MOBIL KORINISH: Sensorli Kartochkalar (md:hidden) */}
+          {/* 1. MOBIL KO'RINISH: Sensorli Kartochkalar (md:hidden) */}
           <div className="md:hidden space-y-3">
             {items.map((item) => (
               <div
@@ -215,7 +267,7 @@ export const RecurringIncomeView: React.FC<RecurringIncomeViewProps> = ({
                     <div className="min-w-0">
                       <h4 className="text-sm font-bold text-slate-900 truncate">{item.title}</h4>
                       <p className="text-[11px] text-slate-500 truncate">
-                        {item.category || "Mijoz to\'lovi"} {item.note ? `• ${item.note}` : ''}
+                        {item.category || "Mijoz to'lovi"} {item.note ? `• ${item.note}` : ''}
                       </p>
                     </div>
                   </div>
@@ -285,8 +337,8 @@ export const RecurringIncomeView: React.FC<RecurringIncomeViewProps> = ({
                       onClick={() => startEdit(item)}
                       className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-bold hover:bg-slate-50 active:scale-95 transition-all shadow-sm"
                     >
-                      <Edit2 className="w-3.5 h-3.5 text-slate-500" />
-                      <span>Tahrirlash</span>
+                      <Edit2 className="w-3.5 h-3.5 text-blue-600" />
+                      <span>O'zgartirish</span>
                     </button>
 
                     <button
@@ -307,13 +359,13 @@ export const RecurringIncomeView: React.FC<RecurringIncomeViewProps> = ({
             ))}
           </div>
 
-          {/* 2. DESKTOP KORINISH: To'liq Jadval (hidden md:block) */}
+          {/* 2. DESKTOP KO'RINISH: To'liq Jadval (hidden md:block) */}
           <div className="hidden md:block bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50/70 border-b border-slate-100 text-slate-500 uppercase tracking-wider text-[10px] font-bold">
+              <table className="w-full text-left text-xs text-slate-700 border-collapse">
+                <thead className="bg-slate-50/75 border-b border-slate-100 text-slate-400 font-bold uppercase text-[10px] tracking-wider">
                   <tr>
-                    <th className="py-3.5 px-5">Daromad manbasi</th>
+                    <th className="py-3.5 px-4">Mijoz / Manba</th>
                     <th className="py-3.5 px-4 text-right">Oylik summa</th>
                     <th className="py-3.5 px-4">To'lov sanasi</th>
                     <th className="py-3.5 px-4">Mas'ul</th>
@@ -321,14 +373,14 @@ export const RecurringIncomeView: React.FC<RecurringIncomeViewProps> = ({
                     <th className="py-3.5 px-4 text-right">Amallar</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 font-medium">
                   {items.map((item) => (
-                    <tr key={item.id} className="hover:bg-slate-50/60 transition-colors">
-                      {/* Manba */}
-                      <td className="py-4 px-5">
+                    <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
+                      {/* Mijoz nomi va toifasi */}
+                      <td className="py-4 px-4">
                         <div className="flex items-center gap-3">
                           <div
-                            className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs ${
+                            className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
                               item.isActive
                                 ? 'bg-blue-50 text-blue-600'
                                 : 'bg-slate-100 text-slate-400'
@@ -337,17 +389,21 @@ export const RecurringIncomeView: React.FC<RecurringIncomeViewProps> = ({
                             <Repeat className="w-4 h-4" />
                           </div>
                           <div>
-                            <div className="flex items-center gap-2">
-                              <p className="font-bold text-slate-900">{item.title}</p>
+                            <div className="font-bold text-slate-900 text-sm">{item.title}</div>
+                            <div className="text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5">
+                              <span>{item.category || "Mijoz to'lovi"}</span>
+                              {item.note && (
+                                <>
+                                  <span>•</span>
+                                  <span className="italic">{item.note}</span>
+                                </>
+                              )}
                               {item.initialDebt && item.initialDebt > 0 ? (
-                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
-                                  Oldingi qarz: {formatMoney(item.initialDebt)}
+                                <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                  Qarz: {formatMoney(item.initialDebt)}
                                 </span>
                               ) : null}
                             </div>
-                            <p className="text-[11px] text-slate-400">
-                              {item.category} {item.note ? `• ${item.note}` : ''}
-                            </p>
                           </div>
                         </div>
                       </td>
@@ -390,13 +446,14 @@ export const RecurringIncomeView: React.FC<RecurringIncomeViewProps> = ({
 
                       {/* Amallar */}
                       <td className="py-4 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1">
+                        <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => startEdit(item)}
-                            className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-blue-600 transition-colors"
-                            title="Tahrirlash"
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-bold hover:bg-slate-50 active:scale-95 transition-all shadow-sm"
+                            title="O'zgartirish"
                           >
-                            <Edit2 className="w-4 h-4" />
+                            <Edit2 className="w-3.5 h-3.5 text-blue-600" />
+                            <span>O'zgartirish</span>
                           </button>
 
                           <button
@@ -422,10 +479,10 @@ export const RecurringIncomeView: React.FC<RecurringIncomeViewProps> = ({
         </>
       )}
 
-      {/* Tahrirlash Modal dialogi (Mobil-first to'liq ekranli / desktop markazlashtirilgan) */}
+      {/* TO'LIQ TAHRIRLASH MODALI (Mobil va Desktop uchun mukammal) */}
       {editingItem && (
         <div className="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center sm:items-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-md bg-white rounded-none sm:rounded-3xl shadow-2xl border-0 sm:border border-slate-100 overflow-hidden flex flex-col">
+          <div className="w-full h-full sm:h-auto sm:max-h-[92vh] sm:max-w-lg bg-white rounded-none sm:rounded-3xl shadow-2xl border-0 sm:border border-slate-100 overflow-hidden flex flex-col">
             {/* Header */}
             <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10 pt-safe">
               <div className="flex items-center gap-2.5">
@@ -434,9 +491,11 @@ export const RecurringIncomeView: React.FC<RecurringIncomeViewProps> = ({
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-slate-900">
-                    '{editingItem.title}' ni tahrirlash
+                    Daromad manbasini o'zgartirish
                   </h3>
-                  <p className="text-[11px] text-slate-400">Doimiy manba parametrlarini yangilash</p>
+                  <p className="text-[11px] text-slate-400">
+                    Barcha parametrlarni xavfsiz tahrirlash (tarix saqlanadi)
+                  </p>
                 </div>
               </div>
               <button
@@ -448,55 +507,207 @@ export const RecurringIncomeView: React.FC<RecurringIncomeViewProps> = ({
             </div>
 
             <form onSubmit={handleSaveEdit} className="flex-1 flex flex-col min-h-0 overflow-hidden">
-              <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3.5">
-                <div className="p-3 rounded-xl bg-amber-50 border border-amber-100 text-amber-800 text-xs">
-                  <strong>Eslatma:</strong> Oylik summani o'zgartirganda eski oylarning
-                  qarzdorliklari o'zgarmaydi. Yangi summa kelgusi oylar uchun amal qiladi.
+              <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+                {/* Xavfsizlik kafolati bildirishnomasi */}
+                <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-start gap-2.5 text-xs text-emerald-800">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold">Ma'lumotlar to'liq saqlanadi:</span>
+                    <p className="text-[11px] text-emerald-700 mt-0.5">
+                      Oldingi barcha kiritilgan to'lovlar, tushumlar va hisobotlar o'chib ketmaydi va xavfsiz qoladi.
+                    </p>
+                  </div>
                 </div>
 
+                {/* Xatolik xabari */}
+                {editError && (
+                  <div className="p-3 rounded-xl bg-rose-50 border border-rose-100 text-rose-700 text-xs font-semibold flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                    <span>{editError}</span>
+                  </div>
+                )}
+
+                {/* 1. Mijoz / Manba nomi */}
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Yangi oylik summa (so'm) *
+                    Mijoz yoki manba nomi *
                   </label>
                   <input
-                    type="number"
-                    value={editAmount}
-                    onChange={(e) => setEditAmount(e.target.value ? Number(e.target.value) : '')}
+                    type="text"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    placeholder="Masalan: ABC MChJ yoki Shartnoma #14"
                     className="w-full py-2.5 px-3 text-xs font-bold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                     required
                   />
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    To'lov sanasi (har oyning) *
-                  </label>
-                  <select
-                    value={editBillingDay}
-                    onChange={(e) => setEditBillingDay(Number(e.target.value))}
-                    className="w-full py-2.5 px-3 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                  >
-                    {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
-                      <option key={d} value={d}>
-                        Har oyning {d}-sanasi
-                      </option>
-                    ))}
-                  </select>
+                {/* 2 & 3. Oylik summa va Oldingi qarzdorlik */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Oylik to'lov summasi *
+                    </label>
+                    <input
+                      type="number"
+                      value={editAmount}
+                      onChange={(e) => setEditAmount(e.target.value ? Number(e.target.value) : '')}
+                      placeholder="0"
+                      className="w-full py-2.5 px-3 text-xs font-bold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                      required
+                    />
+                    {editAmount !== '' && Number(editAmount) > 0 && (
+                      <span className="text-[11px] font-bold text-blue-600 mt-1 block">
+                        = {formatMoney(Number(editAmount))}
+                      </span>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Oldingi qarzdorlik (so'm)
+                    </label>
+                    <input
+                      type="number"
+                      value={editInitialDebt}
+                      onChange={(e) =>
+                        setEditInitialDebt(e.target.value ? Number(e.target.value) : '')
+                      }
+                      placeholder="0"
+                      className="w-full py-2.5 px-3 text-xs font-bold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    />
+                    {editInitialDebt !== '' && Number(editInitialDebt) > 0 && (
+                      <span className="text-[11px] font-bold text-amber-700 mt-1 block">
+                        = {formatMoney(Number(editInitialDebt))}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
+                {/* 4 & 5. To'lov kuni va Mas'ul */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      To'lov sanasi (har oyning) *
+                    </label>
+                    <select
+                      value={editBillingDay}
+                      onChange={(e) => setEditBillingDay(Number(e.target.value))}
+                      className="w-full py-2.5 px-3 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    >
+                      {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                        <option key={d} value={d}>
+                          Har oyning {d}-sanasi
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Mas'ul foydalanuvchi *
+                    </label>
+                    <select
+                      value={editAssignedUser}
+                      onChange={(e) => setEditAssignedUser(e.target.value)}
+                      className="w-full py-2.5 px-3 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    >
+                      {users.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* 6. Kategoriya */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Mas'ul *</label>
-                  <select
-                    value={editAssignedUser}
-                    onChange={(e) => setEditAssignedUser(e.target.value)}
-                    className="w-full py-2.5 px-3 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                  >
-                    {users.map((u) => (
-                      <option key={u.id} value={u.id}>
-                        {u.name}
-                      </option>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Toifa (kategoriya)
+                  </label>
+                  <input
+                    type="text"
+                    value={editCategory}
+                    onChange={(e) => setEditCategory(e.target.value)}
+                    placeholder="Mijoz to'lovi, Ijara, Xizmat"
+                    className="w-full py-2.5 px-3 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  />
+                  <div className="flex flex-wrap gap-1.5 mt-1.5">
+                    {quickCategories.map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => setEditCategory(cat)}
+                        className={`px-2 py-0.5 rounded-lg text-[10px] font-semibold border transition-colors ${
+                          editCategory === cat
+                            ? 'bg-blue-50 text-blue-600 border-blue-200 font-bold'
+                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                        }`}
+                      >
+                        {cat}
+                      </button>
                     ))}
-                  </select>
+                  </div>
+                </div>
+
+                {/* 7 & 8. Boshlanish sanasi va Holat */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Boshlanish sanasi
+                    </label>
+                    <input
+                      type="date"
+                      value={editStartDate}
+                      onChange={(e) => setEditStartDate(e.target.value)}
+                      className="w-full py-2.5 px-3 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Manba holati
+                    </label>
+                    <div className="grid grid-cols-2 gap-2 mt-1">
+                      <button
+                        type="button"
+                        onClick={() => setEditIsActive(true)}
+                        className={`py-2 px-2.5 rounded-xl text-xs font-bold border transition-all ${
+                          editIsActive
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300 shadow-sm'
+                            : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        ✓ Faol
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditIsActive(false)}
+                        className={`py-2 px-2.5 rounded-xl text-xs font-bold border transition-all ${
+                          !editIsActive
+                            ? 'bg-rose-50 text-rose-700 border-rose-300 shadow-sm'
+                            : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        ✕ To'xtatilgan
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 9. Qo'shimcha Izoh */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Qo'shimcha izoh yoki rekvizitlar
+                  </label>
+                  <textarea
+                    value={editNote}
+                    onChange={(e) => setEditNote(e.target.value)}
+                    rows={2}
+                    placeholder="Telefon raqami, shartnoma raqami yoki boshqa eslatmalar..."
+                    className="w-full py-2 px-3 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  />
                 </div>
               </div>
 
@@ -505,16 +716,16 @@ export const RecurringIncomeView: React.FC<RecurringIncomeViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setEditingItem(null)}
-                  className="flex-1 py-2.5 text-xs font-semibold rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors"
+                  className="flex-1 sm:flex-initial px-4 py-2.5 text-xs font-semibold rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors"
                 >
                   Bekor qilish
                 </button>
                 <button
                   type="submit"
                   disabled={actionLoading}
-                  className="flex-1 py-2.5 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20 disabled:opacity-50 transition-all"
+                  className="flex-1 sm:flex-initial px-6 py-2.5 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20 transition-all active:scale-95 disabled:opacity-50"
                 >
-                  {actionLoading ? 'Saqlanmoqda...' : 'Saqlash'}
+                  {actionLoading ? "Saqlanmoqda..." : "O'zgarishlarni saqlash"}
                 </button>
               </div>
             </form>
