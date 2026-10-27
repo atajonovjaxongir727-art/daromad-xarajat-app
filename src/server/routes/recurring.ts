@@ -9,6 +9,7 @@ const prisma = new PrismaClient();
 // Barcha doimiy daromad manbalari
 router.get('/', async (req, res) => {
   try {
+    const todayStr = getTodayString();
     const list = await prisma.recurringIncome.findMany({
       include: {
         assignedUser: {
@@ -30,8 +31,12 @@ router.get('/', async (req, res) => {
     });
 
     const enriched = list.map((item) => {
-      const totalExpected = item.instances.reduce((acc, i) => acc + i.expectedAmount, 0);
-      const totalPaid = item.instances.reduce((acc, i) => acc + i.paidAmount, 0);
+      // Qarzdorlik faqat to'lov sanasi kelgan oylar va oldingi qarzlar uchun hisoblansin!
+      const validInstances = item.instances.filter(
+        (i) => i.yearMonth === 'Oldingi qarz' || i.dueDate <= todayStr || i.paidAmount > 0
+      );
+      const totalExpected = validInstances.reduce((acc, i) => acc + i.expectedAmount, 0);
+      const totalPaid = validInstances.reduce((acc, i) => acc + i.paidAmount, 0);
       const openDebt = Math.max(0, totalExpected - totalPaid);
 
       return {
@@ -39,7 +44,7 @@ router.get('/', async (req, res) => {
         totalExpected,
         totalPaid,
         openDebt,
-        instanceCount: item.instances.length,
+        instanceCount: validInstances.length,
       };
     });
 
@@ -106,7 +111,7 @@ router.post('/', async (req, res) => {
       });
     }
 
-    // Avtomatik joriy oy uchun qarzdorlikni yaratish
+    // Avtomatik joriy oy uchun qarzdorlikni tekshirish (agar to'lov sanasi kelgan bo'lsa)
     await syncRecurringDebts();
 
     await createAuditLog({
@@ -125,7 +130,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Doimiy daromadni to'liq tahrirlash (Barcha parametrlar tahrirlanadi, hech bir ma'lumot o'chib ketmaydi!)
+// Doimiy daromadni to'liq tahrirlash
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -196,7 +201,7 @@ router.put('/:id', async (req, res) => {
       include: { assignedUser: true },
     });
 
-    // 2. Oldingi qarzdorlikni (initialDebt) xavfsiz boshqarish (mavjud to'lovlar HECH QACHON yo'qolmaydi!)
+    // 2. Oldingi qarzdorlikni (initialDebt) xavfsiz boshqarish
     if (initialDebt !== undefined) {
       const newDebtNum = Math.max(0, Number(initialDebt));
       const prevDebtInstance = await prisma.recurringIncomeInstance.findUnique({
@@ -211,13 +216,11 @@ router.put('/:id', async (req, res) => {
 
       if (prevDebtInstance) {
         const paid = prevDebtInstance.paidAmount || 0;
-        // Agar to'lov umuman qilinmagan bo'lsa va yangi qarz 0 qilinsa -> instansiyani xavfsiz o'chiramiz
         if (newDebtNum === 0 && paid === 0 && prevDebtInstance.payments.length === 0) {
           await prisma.recurringIncomeInstance.delete({
             where: { id: prevDebtInstance.id },
           });
         } else {
-          // To'lov bo'lsa yoki summa o'zgargan bo'lsa -> kutilgan summani yangilaymiz (to'langan pullar saqlanadi!)
           const finalExpected = Math.max(newDebtNum, paid);
           let newStatus = prevDebtInstance.status;
           if (paid >= finalExpected && finalExpected > 0) {
@@ -238,7 +241,6 @@ router.put('/:id', async (req, res) => {
           });
         }
       } else if (newDebtNum > 0) {
-        // Avval oldingi qarz kiritilmagan bo'lsa, yangi instansiya yaratamiz
         await prisma.recurringIncomeInstance.create({
           data: {
             recurringIncomeId: id,
@@ -313,7 +315,7 @@ router.put('/:id', async (req, res) => {
       });
     }
 
-    // 6. Qolgan oylar uchun sinxronizatsiyani ishga tushiramiz
+    // 6. Sinxronizatsiyani ishga tushiramiz (faqat to'lov sanasi kelgan qarzlar qoladi)
     await syncRecurringDebts();
 
     // 7. Audit log yozamiz
@@ -383,44 +385,63 @@ router.post('/:id/toggle-active', async (req, res) => {
   }
 });
 
-// O'chirish (Agar to'lov qilingan bo'lsa taqiqlanadi)
+// O'chirish: Ushbu mijoz va unga tegishli barcha qarzdorliklar avtomatik to'liq o'chiriladi!
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { currentUserId, currentUserName } = req.body;
+    const { currentUserId, currentUserName } = req.body || {};
 
     const existing = await prisma.recurringIncome.findUnique({
       where: { id },
-      include: { instances: { include: { payments: true } } },
+      include: {
+        instances: {
+          include: { payments: true, incomes: true },
+        },
+      },
     });
 
     if (!existing) {
       return res.status(404).json({ success: false, message: 'Daromad manbasi topilmadi' });
     }
 
-    const hasPayments = existing.instances.some((inst) => inst.payments.length > 0);
-    if (hasPayments) {
-      return res.status(400).json({
-        success: false,
-        message: "Ushbu manba bo'yicha to'lovlar mavjud. Tarixni saqlab qolish uchun uni o'chirish o'rniga 'Faolsizlantirish'dan foydalaning.",
+    const instanceIds = existing.instances.map((i) => i.id);
+
+    // 1. Agar to'lovlar bo'lsa, ularni tozalaymiz
+    if (instanceIds.length > 0) {
+      await prisma.payment.deleteMany({
+        where: { recurringInstanceId: { in: instanceIds } },
+      });
+
+      await prisma.income.deleteMany({
+        where: { recurringInstanceId: { in: instanceIds } },
+      });
+
+      // 2. Ushbu mijozning barcha qarzdorlik instansiyalarini o'chirish (avtomatik qarzdorlikdan yo'qoladi!)
+      await prisma.recurringIncomeInstance.deleteMany({
+        where: { recurringIncomeId: id },
       });
     }
 
+    // 3. Asosiy doimiy daromad manbasini o'chirish
     await prisma.recurringIncome.delete({
       where: { id },
     });
 
+    // 4. Audit log yozish
     await createAuditLog({
       userId: currentUserId || existing.assignedUserId,
       userName: currentUserName || 'Foydalanuvchi',
       action: 'DELETE',
       entityType: 'RECURRING',
       entityId: id,
-      description: `${currentUserName || 'Foydalanuvchi'} '${existing.title}' doimiy daromad manbasini o'chirdi`,
+      description: `${currentUserName || 'Foydalanuvchi'} '${existing.title}' doimiy daromad manbasini va unga tegishli barcha qarzdorliklarni o'chirdi`,
       oldData: existing,
     });
 
-    res.json({ success: true, message: "Muvaffaqiyatli o'chirildi" });
+    res.json({
+      success: true,
+      message: `'${existing.title}' va unga tegishli barcha qarzdorliklar muvaffaqiyatli o'chirildi`,
+    });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }

@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+﻿import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -34,7 +34,18 @@ export async function syncRecurringDebts() {
   const todayStr = getTodayString();
   const currentYM = getCurrentYearMonth();
 
-  // Barcha faol doimiy daromadlar
+  // 1. MUHIM TALAB: Qarzdorlik faqat to'lov sanasi kelganda tushsin!
+  // Joriy oyda to'lov sanasi hali kelmagan (dueDate > todayStr) va hali to'lanmagan instansiyalarni tozalaymiz
+  await prisma.recurringIncomeInstance.deleteMany({
+    where: {
+      yearMonth: currentYM,
+      dueDate: { gt: todayStr },
+      paidAmount: 0,
+      payments: { none: {} },
+    },
+  });
+
+  // 2. Barcha faol doimiy daromadlar
   const recurringList = await prisma.recurringIncome.findMany({
     where: { isActive: true },
     include: { assignedUser: true },
@@ -44,14 +55,13 @@ export async function syncRecurringDebts() {
   let updatedCount = 0;
 
   for (const item of recurringList) {
-    // Start date dan joriy oygacha bo'lgan oylarni aniqlash
     const startYM = item.startDate ? item.startDate.substring(0, 7) : currentYM;
     const [startYear, startMonth] = startYM.split('-').map(Number);
     const [currYear, currMonth] = currentYM.split('-').map(Number);
 
     const monthsToCheck: string[] = [];
-    let y = startYear;
-    let m = startMonth;
+    let y = isNaN(startYear) ? currYear : startYear;
+    let m = isNaN(startMonth) ? currMonth : startMonth;
 
     while (y < currYear || (y === currYear && m <= currMonth)) {
       const ymStr = `${y}-${String(m).padStart(2, '0')}`;
@@ -64,12 +74,21 @@ export async function syncRecurringDebts() {
     }
 
     for (const ym of monthsToCheck) {
-      // Agar endDate bor bo'lsa va undan keyingi oy bo'lsa, o'tkazib yuborish
       if (item.endDate && ym > item.endDate.substring(0, 7)) {
         continue;
       }
 
-      // Ushbu oy uchun instance mavjudligini tekshirish
+      const [yearNum, monthNum] = ym.split('-').map(Number);
+      const maxDaysInMonth = new Date(yearNum, monthNum, 0).getDate();
+      const billingDayActual = Math.min(item.billingDay, maxDaysInMonth);
+      const dueDate = `${ym}-${String(billingDayActual).padStart(2, '0')}`;
+
+      // MUHIM TALAB: Qarzdorlik faqat to'lov sanasi kelganda tushsin!
+      // Agar joriy oy bo'lsa va to'lov sanasi hali kelmagan bo'lsa, instansiya YARATILMAYDI!
+      if (ym === currentYM && dueDate > todayStr) {
+        continue;
+      }
+
       const existing = await prisma.recurringIncomeInstance.findUnique({
         where: {
           recurringIncomeId_yearMonth: {
@@ -79,21 +98,14 @@ export async function syncRecurringDebts() {
         },
       });
 
-      // Max kunlarni hisoblash
-      const [yearNum, monthNum] = ym.split('-').map(Number);
-      const maxDaysInMonth = new Date(yearNum, monthNum, 0).getDate();
-      const billingDayActual = Math.min(item.billingDay, maxDaysInMonth);
-      const dueDate = `${ym}-${String(billingDayActual).padStart(2, '0')}`;
-
       if (!existing) {
-        // Yangi qarzdorlik yaratish (MUHIM: Daromad yoki Balansga qo'shilmaydi!)
         const isOverdue = dueDate < todayStr;
         await prisma.recurringIncomeInstance.create({
           data: {
             recurringIncomeId: item.id,
             yearMonth: ym,
             dueDate: dueDate,
-            expectedAmount: item.amount, // Shartnomadagi o'sha paytdagi summa saqlanadi
+            expectedAmount: item.amount,
             paidAmount: 0,
             status: isOverdue ? 'OVERDUE' : 'PENDING',
             assignedUserId: item.assignedUserId,
@@ -101,7 +113,6 @@ export async function syncRecurringDebts() {
         });
         createdCount++;
       } else {
-        // Mavjud qarz holatini tekshirish (kechikkanlikni yangilash)
         const isUnpaid = existing.paidAmount < existing.expectedAmount;
         const isPastDue = existing.dueDate < todayStr;
 
@@ -124,7 +135,7 @@ export async function syncRecurringDebts() {
     }
   }
 
-  // Hisoblashlar va xabarnomalar (Section 27)
+  // Hisoblashlar va bildirishnomalar (faqat to'lov sanasi kelgan yoki o'tgan oylar va oldingi qarzlar)
   const allInstances = await prisma.recurringIncomeInstance.findMany({
     include: {
       recurringIncome: true,
@@ -145,8 +156,10 @@ export async function syncRecurringDebts() {
   let totalReceivableAmount = 0;
 
   for (const inst of allInstances) {
+    const isDue = inst.yearMonth === 'Oldingi qarz' || inst.dueDate <= todayStr;
     const remaining = Math.max(0, inst.expectedAmount - inst.paidAmount);
-    if (remaining > 0) {
+
+    if (remaining > 0 && isDue) {
       totalReceivableAmount += remaining;
       if (inst.dueDate === todayStr) {
         todayDueCount++;
@@ -160,14 +173,14 @@ export async function syncRecurringDebts() {
 
   const notifications: string[] = [];
   if (todayDueCount > 0) {
-    notifications.push(`Bugun ${todayDueCount} ta to‘lov kutilmoqda.`);
+    notifications.push(`Bugun ${todayDueCount} ta to'lov kutilmoqda.`);
   }
   if (overdueCount > 0) {
-    notifications.push(`${overdueCount} ta to‘lov muddati o'tgan.`);
+    notifications.push(`${overdueCount} ta to'lov muddati o'tgan.`);
   }
   if (totalOverdueAmount > 0) {
     const formatted = new Intl.NumberFormat('uz-UZ').format(totalOverdueAmount);
-    notifications.push(`Jami kechikkan qarzdorlik: ${formatted} so‘m.`);
+    notifications.push(`Jami kechikkan qarzdorlik: ${formatted} so'm.`);
   }
 
   return {

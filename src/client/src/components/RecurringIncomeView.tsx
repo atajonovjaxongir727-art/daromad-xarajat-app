@@ -3,6 +3,7 @@ import {
   Repeat,
   Plus,
   Edit2,
+  Trash2,
   Power,
   Calendar,
   UserCheck,
@@ -85,6 +86,42 @@ export const RecurringIncomeView: React.FC<RecurringIncomeViewProps> = ({
 
       const data = await res.json();
       if (data.success) {
+        fetchItems();
+      } else {
+        alert(data.message || 'Xatolik yuz berdi');
+      }
+    } catch (err: any) {
+      alert('Xatolik: ' + err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDelete = async (item: RecurringIncome) => {
+    if (
+      !window.confirm(
+        `Haqiqatan ham '${item.title}' doimiy daromad manbasini o'chirishni xohlaysizmi?\n\nUshbu mijoz va unga tegishli barcha qarzdorliklar tizimdan avtomatik butunlay o'chiriladi.`
+      )
+    ) {
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/recurring/${item.id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentUserId: currentUser?.id,
+          currentUserName: currentUser?.name,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        if (editingItem && editingItem.id === item.id) {
+          setEditingItem(null);
+        }
         fetchItems();
       } else {
         alert(data.message || 'Xatolik yuz berdi');
@@ -342,11 +379,21 @@ export const RecurringIncomeView: React.FC<RecurringIncomeViewProps> = ({
                     </button>
 
                     <button
+                      onClick={() => handleDelete(item)}
+                      disabled={actionLoading}
+                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-600 text-xs font-bold hover:bg-rose-100 active:scale-95 transition-all shadow-sm disabled:opacity-50"
+                      title="O'chirish"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                      <span>O'chirish</span>
+                    </button>
+
+                    <button
                       onClick={() => handleToggleActive(item)}
                       disabled={actionLoading}
                       className={`p-1.5 rounded-lg border transition-all active:scale-95 ${
                         item.isActive
-                          ? 'border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100'
+                          ? 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100'
                           : 'border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
                       }`}
                       title={item.isActive ? 'Faolsizlantirish' : 'Faollashtirish'}
@@ -457,11 +504,21 @@ export const RecurringIncomeView: React.FC<RecurringIncomeViewProps> = ({
                           </button>
 
                           <button
+                            onClick={() => handleDelete(item)}
+                            disabled={actionLoading}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-600 text-xs font-bold hover:bg-rose-100 active:scale-95 transition-all shadow-sm disabled:opacity-50"
+                            title="O'chirish"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                            <span>O'chirish</span>
+                          </button>
+
+                          <button
                             onClick={() => handleToggleActive(item)}
                             disabled={actionLoading}
                             className={`p-1.5 rounded-lg transition-colors ${
                               item.isActive
-                                ? 'text-slate-500 hover:bg-rose-50 hover:text-rose-600'
+                                ? 'text-slate-500 hover:bg-slate-100'
                                 : 'text-slate-400 hover:bg-emerald-50 hover:text-emerald-600'
                             }`}
                             title={item.isActive ? 'Faolsizlantirish' : 'Faollashtirish'}
@@ -479,7 +536,7 @@ export const RecurringIncomeView: React.FC<RecurringIncomeViewProps> = ({
         </>
       )}
 
-      {/* TO'LIQ TAHRIRLASH MODALI (Mobil va Desktop uchun mukammal) */}
+      {/* TO'LIQ TAHRIRLASH MODALI */}
       {editingItem && (
         <div className="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center sm:items-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
           <div className="w-full h-full sm:h-auto sm:max-h-[92vh] sm:max-w-lg bg-white rounded-none sm:rounded-3xl shadow-2xl border-0 sm:border border-slate-100 overflow-hidden flex flex-col">
@@ -712,21 +769,34 @@ export const RecurringIncomeView: React.FC<RecurringIncomeViewProps> = ({
               </div>
 
               {/* Sticky pastki tugmalar */}
-              <div className="p-4 bg-white/95 backdrop-blur border-t border-slate-100 flex items-center justify-end gap-2.5 sticky bottom-0 z-10 pb-safe">
+              <div className="p-4 bg-white/95 backdrop-blur border-t border-slate-100 flex items-center justify-between gap-2.5 sticky bottom-0 z-10 pb-safe">
                 <button
                   type="button"
-                  onClick={() => setEditingItem(null)}
-                  className="flex-1 sm:flex-initial px-4 py-2.5 text-xs font-semibold rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors"
-                >
-                  Bekor qilish
-                </button>
-                <button
-                  type="submit"
+                  onClick={() => handleDelete(editingItem)}
                   disabled={actionLoading}
-                  className="flex-1 sm:flex-initial px-6 py-2.5 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20 transition-all active:scale-95 disabled:opacity-50"
+                  className="px-3.5 py-2.5 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl border border-rose-200 transition-colors flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
+                  title="Manbani va barcha qarzdorliklarini o'chirish"
                 >
-                  {actionLoading ? "Saqlanmoqda..." : "O'zgarishlarni saqlash"}
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>O'chirish</span>
                 </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingItem(null)}
+                    className="px-4 py-2.5 text-xs font-semibold rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors"
+                  >
+                    Bekor qilish
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={actionLoading}
+                    className="px-5 py-2.5 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20 transition-all active:scale-95 disabled:opacity-50"
+                  >
+                    {actionLoading ? "Saqlanmoqda..." : "Saqlash"}
+                  </button>
+                </div>
               </div>
             </form>
           </div>

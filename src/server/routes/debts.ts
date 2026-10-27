@@ -1,4 +1,4 @@
-import { Router } from 'express';
+﻿import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { createAuditLog } from '../services/auditService.js';
 import { getTodayString } from '../services/syncService.js';
@@ -12,34 +12,45 @@ router.get('/', async (req, res) => {
     const { status, yearMonth, userId, search, onlyOpen } = req.query;
     const todayStr = getTodayString();
 
-    const whereClause: any = {};
+    // MUHIM TALAB: Qarzdorlikka faqat to'lov sanasi kelganda tushsin (oldingi qarz va to'lov sanasi <= bugun)
+    const whereConditions: any[] = [
+      {
+        OR: [
+          { yearMonth: 'Oldingi qarz' },
+          { dueDate: { lte: todayStr } },
+          { paidAmount: { gt: 0 } },
+        ],
+      },
+    ];
 
     if (yearMonth) {
-      whereClause.yearMonth = String(yearMonth);
+      whereConditions.push({ yearMonth: String(yearMonth) });
     }
 
     if (userId) {
-      whereClause.assignedUserId = String(userId);
+      whereConditions.push({ assignedUserId: String(userId) });
     }
 
     if (onlyOpen === 'true') {
-      whereClause.status = { not: 'PAID' };
+      whereConditions.push({ status: { not: 'PAID' } });
     } else if (status && status !== 'ALL') {
       if (status === 'OPEN') {
-        whereClause.status = { not: 'PAID' };
+        whereConditions.push({ status: { not: 'PAID' } });
       } else {
-        whereClause.status = String(status);
+        whereConditions.push({ status: String(status) });
       }
     }
 
     if (search) {
-      whereClause.recurringIncome = {
-        title: { contains: String(search) },
-      };
+      whereConditions.push({
+        recurringIncome: {
+          title: { contains: String(search), mode: 'insensitive' },
+        },
+      });
     }
 
     const instances = await prisma.recurringIncomeInstance.findMany({
-      where: whereClause,
+      where: { AND: whereConditions },
       include: {
         recurringIncome: true,
         assignedUser: {
@@ -101,15 +112,15 @@ router.post('/:id/pay', async (req, res) => {
     const { amount, paymentDate, accountId, receivedById, note } = req.body;
 
     if (!amount || Number(amount) <= 0) {
-      return res.status(400).json({ success: false, message: 'To‘lov summasi musbat bo‘lishi kerak' });
+      return res.status(400).json({ success: false, message: "To'lov summasi musbat bo'lishi kerak" });
     }
 
     if (!accountId) {
-      return res.status(400).json({ success: false, message: 'Pul qabul qilinadigan hisob/hamyon tanlanishi shart' });
+      return res.status(400).json({ success: false, message: "Pul qabul qilinadigan hisob/hamyon tanlanishi shart" });
     }
 
     if (!receivedById) {
-      return res.status(400).json({ success: false, message: 'To‘lovni qabul qilgan foydalanuvchi tanlanishi shart' });
+      return res.status(400).json({ success: false, message: "To'lovni qabul qilgan foydalanuvchi tanlanishi shart" });
     }
 
     const payAmount = Number(amount);
@@ -132,7 +143,7 @@ router.post('/:id/pay', async (req, res) => {
     if (payAmount > remainingDebt) {
       return res.status(400).json({
         success: false,
-        message: `Kiritilgan summa (${new Intl.NumberFormat('uz-UZ').format(payAmount)} so‘m) qolgan qarzdorlikdan (${new Intl.NumberFormat('uz-UZ').format(remainingDebt)} so‘m) ko‘p bo‘lishi mumkin emas`,
+        message: `Kiritilgan summa (${new Intl.NumberFormat('uz-UZ').format(payAmount)} so'm) qolgan qarzdorlikdan (${new Intl.NumberFormat('uz-UZ').format(remainingDebt)} so'm) ko'p bo'lishi mumkin emas`,
       });
     }
 
@@ -175,7 +186,7 @@ router.post('/:id/pay', async (req, res) => {
         paymentDate: payDate,
         accountId: account.id,
         receivedById: user.id,
-        note: note || `${instance.recurringIncome.title} to‘lovi (${instance.yearMonth})`,
+        note: note || `${instance.recurringIncome.title} to'lovi (${instance.yearMonth})`,
       },
     });
 
@@ -187,11 +198,11 @@ router.post('/:id/pay', async (req, res) => {
         userId: user.id,
         type: 'recurring_payment',
         source: instance.recurringIncome.title,
-        category: 'Mijoz to‘lovi',
+        category: "Mijoz to'lovi",
         accountId: account.id,
         paymentMethod: account.type,
         recurringInstanceId: instance.id,
-        note: note || `${instance.recurringIncome.title} (${instance.yearMonth}) oylik to‘lovi`,
+        note: note || `${instance.recurringIncome.title} (${instance.yearMonth}) oylik to'lovi`,
       },
     });
 
@@ -218,7 +229,7 @@ router.post('/:id/pay', async (req, res) => {
         amount: payAmount,
         accountId: account.id,
         userId: user.id,
-        description: `${instance.recurringIncome.title} to‘lovi (${instance.yearMonth})`,
+        description: `${instance.recurringIncome.title} to'lovi (${instance.yearMonth})`,
         referenceId: income.id,
         balanceAfter: updatedAccount.balance,
       },
@@ -232,7 +243,7 @@ router.post('/:id/pay', async (req, res) => {
       action: 'RECEIVE_PAYMENT',
       entityType: 'DEBT',
       entityId: instance.id,
-      description: `${user.name} '${instance.recurringIncome.title}' dan ${formattedAmount} so‘m to‘lov qabul qildi (${isFullyPaid ? 'To‘liq to‘landi' : 'Qisman to‘landi'})`,
+      description: `${user.name} '${instance.recurringIncome.title}' dan ${formattedAmount} so'm to'lov qabul qildi (${isFullyPaid ? "To'liq to'landi" : "Qisman to'landi"})`,
       newData: {
         instanceId: instance.id,
         amount: payAmount,
@@ -273,7 +284,7 @@ router.delete('/:instanceId/payments/:paymentId', async (req, res) => {
     });
 
     if (!payment || payment.recurringInstanceId !== instanceId) {
-      return res.status(404).json({ success: false, message: 'To‘lov topilmadi' });
+      return res.status(404).json({ success: false, message: "To'lov topilmadi" });
     }
 
     // 1. Hisobdan pulni ayirish
@@ -320,11 +331,11 @@ router.delete('/:instanceId/payments/:paymentId', async (req, res) => {
       action: 'DELETE',
       entityType: 'DEBT',
       entityId: instanceId,
-      description: `${currentUserName || 'Foydalanuvchi'} ${new Intl.NumberFormat('uz-UZ').format(payment.amount)} so‘mlik to‘lovni bekor qildi`,
+      description: `${currentUserName || 'Foydalanuvchi'} ${new Intl.NumberFormat('uz-UZ').format(payment.amount)} so'mlik to'lovni bekor qildi`,
       oldData: payment,
     });
 
-    res.json({ success: true, message: 'To‘lov bekor qilindi va balans qaytarildi' });
+    res.json({ success: true, message: "To'lov bekor qilindi va balans qaytarildi" });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }
